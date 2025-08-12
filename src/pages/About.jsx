@@ -1,29 +1,31 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaHeart, FaShieldAlt, FaMapMarkedAlt } from "react-icons/fa";
 import Accordion from "../components/Accordion";
 import logo from "../assets/logo.png";
-
-const galleryImages = (() => {
-  const files = import.meta.glob("../assets/about/*.{jpg,jpeg,png,webp}", {
-    eager: true,
-    import: "default",
-  });
-
-  const items = Object.entries(files).map(([path, url]) => ({ path, url }));
-  items.sort((a, b) => {
-    const getNum = (p) => {
-      const m = p.match(/about(\d+)\./i);
-      return m ? parseInt(m[1], 10) : 9999;
-    };
-    return getNum(a.path) - getNum(b.path);
-  });
-
-  return items.slice(0, 15).map((it) => it.url);
-})();
+import { listAboutGallery } from "../services/storage"; // <-- NEW
 
 export default function About() {
   const [lightbox, setLightbox] = useState({ open: false, src: null });
+  const [galleryUrls, setGalleryUrls] = useState([]);
+  const [loadingGallery, setLoadingGallery] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const urls = await listAboutGallery(); // reads from Supabase Storage (media/about)
+        if (!cancelled) setGalleryUrls(urls.slice(0, 15));
+      } catch (e) {
+        console.warn("Gallery load failed:", e);
+      } finally {
+        if (!cancelled) setLoadingGallery(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const faqItems = useMemo(
     () => [
@@ -124,19 +126,23 @@ export default function About() {
         </ul>
       </div>
 
-      {/* Gallery */}
+      {/* Gallery (from Supabase Storage) */}
       <div className="mb-10">
         <h2 className="font-semibold text-brand.heron mb-3">A glimpse of the quiet</h2>
 
-        {galleryImages.length === 0 ? (
+        {loadingGallery ? (
           <div className="w-full rounded-xl border border-dashed border-black/20 bg-black/5 p-6 text-center text-black/50">
-            Add up to 15 photos in <code>src/assets/about/</code> (about1.jpeg … about15.jpeg)
+            Loading photos…
+          </div>
+        ) : galleryUrls.length === 0 ? (
+          <div className="w-full rounded-xl border border-dashed border-black/20 bg-black/5 p-6 text-center text-black/50">
+            Add images to <code>Storage → media/about</code> to see them here.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {galleryImages.map((src, i) => (
+            {galleryUrls.map((src, i) => (
               <button
-                key={i}
+                key={src}
                 type="button"
                 onClick={() => setLightbox({ open: true, src })}
                 className="group relative overflow-hidden rounded-xl border border-black/5 focus:outline-none"
