@@ -1,46 +1,54 @@
-// src/components/Hero.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import heroImage from "../assets/placeholder.jpeg";
-import logo from "../assets/logo.png";
+import { getHeroImageUrl } from "../services/storage";
 
 export default function Hero() {
+  const [heroUrl, setHeroUrl] = useState(null);
+  const [loadingHero, setLoadingHero] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const url = await getHeroImageUrl();
+        if (!cancelled) setHeroUrl(url);
+      } catch (e) {
+        console.warn("Hero image load failed:", e);
+      } finally {
+        if (!cancelled) setLoadingHero(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
-    <section
-      className="relative h-[70vh] md:h-[80vh] flex items-center justify-center text-white text-center"
-      style={{
-        backgroundImage: `url(${heroImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center 65%",
-      }}
-    >
-      <div className="absolute inset-0 bg-black/45 md:bg-black/40" />
-
-      <div className="relative px-4 max-w-4xl">
-        <img
-          src={logo}
-          alt="Be Still Crossville logo"
-          className="mx-auto w-28 md:w-36 mb-6 drop-shadow"
-        />
-        <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-          Explore Crossville’s Hidden Gems
-        </h1>
-        <p className="mt-4 text-lg md:text-xl opacity-95">
-          Accessible, affordable, and unforgettable kayaking, hiking, and guided tours
-          with <span className="font-semibold">Be Still Crossville</span>.
-        </p>
-
-        <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
-          <Link to="/tours" className="button-primary" aria-label="View Tours">
-            View Tours
-          </Link>
-          <a
-            href="#learn-more"
-            className="px-4 py-2 rounded-xl border border-white/80 text-white hover:bg-white/10 transition"
-          >
-            Learn More
-          </a>
+    <section className="relative bg-black text-white">
+      {loadingHero ? (
+        <div className="h-[60vh] flex items-center justify-center text-white/70">
+          Loading hero…
         </div>
+      ) : heroUrl ? (
+        <img
+          src={heroUrl}
+          alt="Be Still Crossville Hero"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      ) : (
+        <div className="h-[60vh] flex items-center justify-center text-white/70">
+          No hero image found
+        </div>
+      )}
+
+      <div className="relative z-10 flex flex-col items-center justify-center h-[60vh] bg-black/40 px-4 text-center">
+        <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          Be Still Crossville
+        </h1>
+        <p className="max-w-xl mb-6">
+          Guided kayaking & hiking experiences in the heart of the Cumberland Plateau.
+        </p>
+        <Link to="/tours" className="button-primary">Book a Tour</Link>
       </div>
     </section>
   );
