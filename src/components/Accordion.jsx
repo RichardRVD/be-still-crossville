@@ -1,63 +1,70 @@
+// src/components/Accordion.jsx
 import React, { useState } from "react";
 
-export default function Accordion({ items }) {
+export default function Accordion({ items = [], singleExpand = true }) {
+  const [openIndex, setOpenIndex] = useState(null);
+  const [openSet, setOpenSet] = useState(new Set());
+
+  function toggle(i) {
+    if (singleExpand) {
+      setOpenIndex((prev) => (prev === i ? null : i));
+    } else {
+      setOpenSet((prev) => {
+        const next = new Set(prev);
+        next.has(i) ? next.delete(i) : next.add(i);
+        return next;
+      });
+    }
+  }
+
+  const isOpen = (i) => (singleExpand ? openIndex === i : openSet.has(i));
+
   return (
-    <div className="rounded-2xl border border-black/5 bg-white divide-y divide-black/10">
-      {items.map((it, i) => (
-        <Row key={i} q={it.q} a={it.a} />
-      ))}
-    </div>
-  );
-}
+    <div className="rounded-2xl border border-black/5 divide-y">
+      {items.map((item, i) => {
+        const open = isOpen(i);
+        return (
+          <div
+            key={i}
+            className={
+              "transition-colors " +
+              (open ? "bg-brand.heron/10" : "bg-white")
+            }
+          >
+            <button
+              type="button"
+              onClick={() => toggle(i)}
+              aria-expanded={open}
+              className={
+                "w-full flex items-center justify-between gap-4 px-4 py-3 text-left " +
+                (open ? "text-brand.heron" : "text-foreground")
+              }
+            >
+              {/* Keep the question visible at all times */}
+              <span className="font-medium">{item.q}</span>
+              <span
+                className={
+                  "inline-flex h-6 w-6 items-center justify-center rounded-md border border-black/10 " +
+                  (open ? "bg-brand.heron text-white" : "bg-white text-black/60")
+                }
+                aria-hidden="true"
+              >
+                {open ? "−" : "+"}
+              </span>
+            </button>
 
-function Row({ q, a }) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div
-      className={[
-        "transition-colors",
-        "duration-300",
-        "relative",
-         open ? "bg-brand.heron/80 text-white" : "bg-white text-brand.heron"
-      ].join(" ")}
-    >
-      {/* left accent when open */}
-      <span
-        className={[
-          "absolute left-0 top-0 h-full w-1 rounded-l-2xl transition-opacity duration-300",
-          open ? "opacity-100 bg-brand.heron" : "opacity-0",
-        ].join(" ")}
-      />
-
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full px-4 py-3 text-left flex items-center justify-between relative"
-        aria-expanded={open}
-      >
-        <span className="font-medium text-brand.heron">{q}</span>
-        <span
-          className={[
-            "ml-4 text-black/60 select-none",
-            "transition-transform duration-300",
-            open ? "rotate-45" : "rotate-0",
-          ].join(" ")}
-        >
-          +
-        </span>
-      </button>
-
-      {/* Slide + fade answer */}
-      <div
-        className={[
-          "px-4 pr-6 text-sm text-black/70",
-          "overflow-hidden transition-all duration-300",
-          open ? "max-h-40 opacity-100 pb-4" : "max-h-0 opacity-0 pb-0",
-        ].join(" ")}
-      >
-        {typeof a === "string" ? <p>{a}</p> : a}
-      </div>
+            {/* Answer */}
+            <div
+              className={
+                "px-4 text-sm text-black/70 transition-[max-height,opacity] duration-200 " +
+                (open ? "opacity-100 max-h-64" : "opacity-0 max-h-0 overflow-hidden")
+              }
+            >
+              {item.a}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaHeart, FaShieldAlt, FaMapMarkedAlt } from "react-icons/fa";
 import Accordion from "../components/Accordion";
-import logo from "../assets/logo.png";
-import { listAboutGallery } from "../services/storage"; // <-- NEW
+import Logo from "../components/Logo";
+import { listAboutGallery } from "../services/storage";
 
 export default function About() {
   const [lightbox, setLightbox] = useState({ open: false, src: null });
@@ -14,7 +14,7 @@ export default function About() {
     let cancelled = false;
     (async () => {
       try {
-        const urls = await listAboutGallery(); // reads from Supabase Storage (media/about)
+        const urls = await listAboutGallery();
         if (!cancelled) setGalleryUrls(urls.slice(0, 15));
       } catch (e) {
         console.warn("Gallery load failed:", e);
@@ -57,7 +57,7 @@ export default function About() {
     <section className="max-w-5xl mx-auto px-4 py-12">
       {/* Heading */}
       <header className="text-center mb-10">
-        <img src={logo} alt="Be Still Crossville logo" className="mx-auto w-16 h-16 mb-4" />
+        <Logo className="mx-auto w-16 h-16 mb-4" />
         <h1 className="text-3xl md:text-4xl font-semibold text-brand.heron">
           About Be Still Crossville
         </h1>
@@ -161,7 +161,6 @@ export default function About() {
         )}
       </div>
 
-      {/* Lightbox (simple) */}
       {lightbox.open && (
         <div
           className="fixed inset-0 z-50 bg-black/70 grid place-items-center p-4"
