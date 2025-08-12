@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaHeart, FaShieldAlt, FaMapMarkedAlt } from "react-icons/fa";
 import Accordion from "../components/Accordion";
-import logo from "../assets/logo.png";
+import Logo from "../components/Logo"; // ✅ Uses Supabase-based logo
 import { listAboutGallery } from "../services/storage"; // <-- NEW
 
 export default function About() {
@@ -57,7 +57,7 @@ export default function About() {
     <section className="max-w-5xl mx-auto px-4 py-12">
       {/* Heading */}
       <header className="text-center mb-10">
-        <img src={logo} alt="Be Still Crossville logo" className="mx-auto w-16 h-16 mb-4" />
+        <Logo className="mx-auto w-16 h-16 mb-4" /> {/* ✅ Uses Supabase logo */}
         <h1 className="text-3xl md:text-4xl font-semibold text-brand.heron">
           About Be Still Crossville
         </h1>
@@ -72,7 +72,7 @@ export default function About() {
         <div className="card">
           <h2 className="font-semibold text-brand.heron mb-2">Our Story</h2>
           <p className="text-sm text-black/70">
-            We started Be Still Crossville to share the quiet side of the Cumberland Plateau
+            We started Be Still Crossville to share the quiet side of the Cumberland Plateau —
             calm water paddles, beginner-friendly hikes, and nature walks where conversation and
             observation matter as much as miles. It’s community first, adventure second.
           </p>
