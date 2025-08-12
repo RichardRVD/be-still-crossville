@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.button-primary { @apply inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium bg-brand-heron text-white hover:opacity-90 transition; }
+.card { @apply rounded-2xl border border-black/5 bg-white shadow-soft p-4; }
