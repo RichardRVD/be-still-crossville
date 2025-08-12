@@ -72,7 +72,7 @@ export default function About() {
         <div className="card">
           <h2 className="font-semibold text-brand.heron mb-2">Our Story</h2>
           <p className="text-sm text-black/70">
-            We started Be Still Crossville to share the quiet side of the Cumberland Plateau
+            We started Be Still Crossville to share the quiet side of the Cumberland Plateau —
             calm water paddles, beginner-friendly hikes, and nature walks where conversation and
             observation matter as much as miles. It’s community first, adventure second.
           </p>
