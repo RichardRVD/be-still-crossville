@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import SocialLinks from './components/SocialLinks'
+import ScrollManager from "./components/ScrollManager";
 
 export default function App() {
   return (
@@ -11,7 +12,7 @@ export default function App() {
       <main className="flex-1">
         <Outlet />
       </main>
-      <SocialLinks /> {/* <- Now appears above footer */}
+      <SocialLinks />
       <Footer />
     </div>
   );

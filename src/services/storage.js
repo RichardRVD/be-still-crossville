@@ -4,7 +4,6 @@ import { supabase } from "./supabase";
  *  Falls back to probing numbered files if list() returns nothing.
  */
 export async function listAboutGallery() {
-  // 1) Try the normal list()
   try {
     const { data, error } = await supabase
       .storage
@@ -44,7 +43,6 @@ export async function listAboutGallery() {
     })
   );
 
-  // natural sort by embedded number
   urls.sort((a, b) => {
     const na = a.match(/about(\d+)/i)?.[1];
     const nb = b.match(/about(\d+)/i)?.[1];
@@ -54,7 +52,6 @@ export async function listAboutGallery() {
   return urls;
 }
 
-/** Get the hero image URL. Try a known path, then list fallback. */
 export async function getHeroImageUrl() {
   const specific = supabase.storage
     .from("media")

@@ -8,7 +8,6 @@ export default function Tours() {
   const [filter, setFilter] = useState('All')
   const formRef = useRef(null)
 
-  // Catalog with categories + tags
   const TOURS = useMemo(() => ([
     // Water
     { title: 'Sunset Kayak – Meadow Park Lake', desc: 'Calm-water paddle, ~2 hours. Great for beginners.', category: 'Kayak', tags: ['Easy','Sunset','Water'] },
