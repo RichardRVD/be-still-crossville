@@ -1,43 +1,58 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+// Deno Edge Function: contact
+// Sends a general contact message via Resend.
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const ALLOW_ORIGIN = "*";
+const ALLOW_HEADERS = "authorization, content-type";
 
-const resendKey = Deno.env.get("RESEND_API_KEY")!;
-const toEmail   = Deno.env.get("CONTACT_TO_EMAIL") || "bestillcrossville@gmail.com";
-const fromEmail = Deno.env.get("CONTACT_FROM_EMAIL") || "Be Still Crossville <hello@stillcrossville.com>";
+function withCors(res: Response) {
+  res.headers.set("Access-Control-Allow-Origin", ALLOW_ORIGIN);
+  res.headers.set("Access-Control-Allow-Headers", ALLOW_HEADERS);
+  res.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  return res;
+}
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+async function sendEmail(name: string, email: string, message: string) {
+  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
+  const to = Deno.env.get("CONTACT_TO_EMAIL")!;
+  const from = Deno.env.get("CONTACT_FROM_EMAIL")!;
+
+  const subject = `Contact form: ${name}`;
+  const text =
+`Name: ${name}
+Email: ${email}
+
+Message:
+${message}`;
+
+  const resp = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ from, to, subject, text }),
+  });
+
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    console.error("Resend error", resp.status, data);
+    throw new Error(data?.message || `Resend failed (${resp.status})`);
+  }
+  return data;
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return withCors(new Response(null, { status: 204 }));
+  }
 
   try {
-    const { name, email, message } = await req.json();
-    if (!name || !email || !message) {
-      return new Response("Missing fields", { status: 400, headers: corsHeaders });
-    }
-
-    const r = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: [toEmail],
-        subject: `New contact message from ${name}`,
-        reply_to: email,
-        text: `Name: ${name}\nEmail: ${email}\n\n${message}`,
-      }),
-    });
-
-    if (!r.ok) return new Response(await r.text(), { status: 500, headers: corsHeaders });
-
-    return new Response("Sent", { status: 200, headers: corsHeaders });
+    const { name = "", email = "", message = "" } = await req.json();
+    if (!name || !email || !message) throw new Error("Missing fields");
+    const result = await sendEmail(String(name), String(email), String(message));
+    return withCors(new Response(JSON.stringify({ ok: true, id: result?.id }), { status: 200 }));
   } catch (e) {
-    return new Response(String(e?.message || e), { status: 500, headers: corsHeaders });
+    return withCors(new Response(String(e?.message || e), { status: 400 }));
   }
 });
