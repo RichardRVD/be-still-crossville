@@ -21,5 +21,4 @@ build/
 
 # Large assets (optional, if you use Git LFS for images)
 *.jpeg
-*.png
 *.jpg
