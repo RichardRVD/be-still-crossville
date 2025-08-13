@@ -13,7 +13,7 @@ export default function Home() {
         title="Be Still Crossville — Guided Kayak & Hike Tours in Cumberland County, TN"
         description="Small-group kayak tours, guided hikes, and community cleanups around Crossville, TN. Soft launch: pay what you want for volunteers."
         url="https://stillcrossville.com/"
-        image="https://stillcrossville.com/og.jpg"  // optional; place an image later
+        image="https://stillcrossville.com/og.jpg"
       />
 
       {/* What we offer */}
@@ -35,7 +35,6 @@ export default function Home() {
             {
               title: "Community & Cleanups",
               desc: "Beach cleanups, stewardship days, and volunteer meetups.",
-              // Using the leaf to represent stewardship; feel free to swap later.
               icon: <FaHandshake className="text-brand.heron/90" size={20} />,
             },
           ].map((c) => (

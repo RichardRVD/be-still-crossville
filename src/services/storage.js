@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 
-const projectBase = import.meta.env.VITE_SUPABASE_URL;  // https://xxxxx.supabase.co
+const projectBase = import.meta.env.VITE_SUPABASE_URL;
 const OBJECT_BASE  = `${projectBase}/storage/v1/object/public`;
 
 // Encode each path segment but keep slashes
@@ -9,7 +9,6 @@ const encodePath = (p) => p.split("/").map(encodeURIComponent).join("/");
 function buildImageVariants(bucket, path) {
   const p = encodePath(path);
   const original = `${OBJECT_BASE}/${bucket}/${p}`;
-  // Keep the shape so About.jsx code doesn't need a new type
   return { thumb: original, thumb2x: original, full: original, original };
 }
 
@@ -30,7 +29,6 @@ export async function listAboutGallery() {
     }
   } catch {/* ignore; fallback below */}
 
-  // Fallback: probe numbered names if list() returns nothing
   if (!files.length) {
     const exts = ["jpeg", "jpg", "png", "webp"];
     const candidates = [];
