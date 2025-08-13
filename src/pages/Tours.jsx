@@ -319,6 +319,18 @@ export default function Tours() {
           </label>
 
           <label className="block">
+            <span className="text-sm">Preferred contact</span>
+            <select
+              name="preferred_contact"
+              defaultValue="email"
+              className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2"
+            >
+              <option value="email">Email</option>
+              <option value="text">Text</option>
+            </select>
+          </label>
+
+          <label className="block">
             <span className="text-sm">Tour Interested In</span>
             <select
               name="tour"
