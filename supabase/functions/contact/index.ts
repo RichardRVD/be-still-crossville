@@ -1,9 +1,8 @@
 // supabase/functions/contact/index.ts
-// Sends an email to you AND an acknowledgement to the user (Contact form)
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
-const ALLOW_ORIGIN = "*"; // or "https://stillcrossville.com"
+const ALLOW_ORIGIN = "*";
 const ALLOW_HEADERS = "authorization, content-type";
 
 function withCors(res: Response) {
@@ -25,8 +24,8 @@ type EmailPayload = {
 };
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
-const TO_ADMIN = Deno.env.get("CONTACT_TO_EMAIL")!; // e.g. bestillcrossville@gmail.com
-const FROM_CONTACT = Deno.env.get("CONTACT_FROM_EMAIL_CONTACT")!; // e.g. Be Still Crossville — Contact <contact@stillcrossville.com>
+const TO_ADMIN = Deno.env.get("CONTACT_TO_EMAIL")!;
+const FROM_CONTACT = Deno.env.get("CONTACT_FROM_EMAIL_CONTACT")!;
 
 async function sendViaResend(body: Record<string, unknown>) {
   const resp = await fetch("https://api.resend.com/emails", {
@@ -78,7 +77,7 @@ When: ${new Date(p._meta?.ts || Date.now()).toISOString()}
     subject,
     text,
     html,
-    reply_to: p.email, // so replying goes back to the sender
+    reply_to: p.email,
   });
 }
 
@@ -103,7 +102,7 @@ If this was not you, please ignore this email.
   <p>— Be Still Crossville</p>`;
 
   return sendViaResend({
-    from: FROM_CONTACT,   // shows as “Be Still Crossville — Contact”
+    from: FROM_CONTACT,
     to: p.email,
     subject,
     text,
@@ -129,7 +128,6 @@ serve(async (req) => {
       _meta: body._meta ?? {},
     };
 
-    // Send to admin, then send acknowledgement to user (don’t block on 2nd)
     await emailAdmin(payload);
     emailUserAck(payload).catch((e) => console.warn("User ack failed (non-blocking):", e));
 

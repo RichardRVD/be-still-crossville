@@ -7,9 +7,7 @@ import { listAboutGallery } from "../services/storage";
 import Seo from "../components/Seo";
 
 export default function About() {
-  // lightbox now stores the *full-size* URL
   const [lightbox, setLightbox] = useState({ open: false, src: null });
-  // gallery now holds objects: { thumb, thumb2x, full, original }
   const [gallery, setGallery] = useState([]);
   const [loadingGallery, setLoadingGallery] = useState(true);
 
@@ -17,7 +15,7 @@ export default function About() {
     let cancelled = false;
     (async () => {
       try {
-        const items = await listAboutGallery(); // returns variant objects
+        const items = await listAboutGallery();
         if (!cancelled) setGallery(items.slice(0, 15));
       } catch (e) {
         console.warn("Gallery load failed:", e);

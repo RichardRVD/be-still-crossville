@@ -1,9 +1,8 @@
 // supabase/functions/notify-signup/index.ts
-// Sends an email to you AND an acknowledgement to the user (Tours/Booking form)
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
-const ALLOW_ORIGIN = "*"; // or "https://stillcrossville.com"
+const ALLOW_ORIGIN = "*";
 const ALLOW_HEADERS = "authorization, content-type";
 
 function withCors(res: Response) {
@@ -28,8 +27,8 @@ type SignupPayload = {
 };
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
-const TO_ADMIN = Deno.env.get("CONTACT_TO_EMAIL")!; // e.g. bestillcrossville@gmail.com
-const FROM_BOOKINGS = Deno.env.get("CONTACT_FROM_EMAIL_BOOKINGS")!; // e.g. Be Still Crossville — Booking <booking@stillcrossville.com>
+const TO_ADMIN = Deno.env.get("CONTACT_TO_EMAIL")!;
+const FROM_BOOKINGS = Deno.env.get("CONTACT_FROM_EMAIL_BOOKINGS")!;
 
 async function sendViaResend(body: Record<string, unknown>) {
   const resp = await fetch("https://api.resend.com/emails", {
@@ -85,12 +84,12 @@ When: ${new Date(p._meta?.ts || Date.now()).toISOString()}
     subject,
     text,
     html,
-    reply_to: p.email || undefined, // reply goes to the guest if present
+    reply_to: p.email || undefined,
   });
 }
 
 async function emailUserAck(p: SignupPayload) {
-  if (!p.email) return; // nothing to do
+  if (!p.email) return;
 
   const subject = "We received your tour request — Be Still Crossville";
   const text = `Hi ${p.name ?? "there"},
@@ -108,7 +107,7 @@ If you'd like to contribute now, you can use our Pay‑What‑You‑Want link on
   <p>— Be Still Crossville</p>`;
 
   return sendViaResend({
-    from: FROM_BOOKINGS, // shows as “Be Still Crossville — Booking”
+    from: FROM_BOOKINGS,
     to: p.email,
     subject,
     text,
@@ -122,7 +121,6 @@ serve(async (req) => {
   try {
     const payload = (await req.json()) as SignupPayload;
 
-    // Send to admin, then acknowledgement to user (non-blocking second send)
     await emailAdmin(payload);
     emailUserAck(payload).catch((e) => console.warn("User ack failed (non-blocking):", e));
 

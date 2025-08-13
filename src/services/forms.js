@@ -33,11 +33,9 @@ export async function submitVolunteerForm(formData) {
     if (!payload.name) throw new Error('Please enter your name.');
     if (!isEmail(payload.email)) throw new Error('Please enter a valid email.');
 
-    // 1) Save to Supabase (this uses supabase-js; it's fine that it includes apikey)
     const { error } = await supabase.from('signups').insert(payload);
     if (error) throw new Error(error.message);
 
-    // 2) Ping Edge Function to email you + auto-reply user (NO apikey header!)
     try {
       const res = await fetch(`${BASE_URL}/functions/v1/notify-signup`, {
         method: 'POST',
@@ -90,8 +88,7 @@ export async function submitContactForm(formData) {
     credentials: 'omit',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${ANON}`,   // DO send this
-      // DO NOT send 'apikey': it will fail preflight
+      'Authorization': `Bearer ${ANON}`,
     },
     body: JSON.stringify({
       name, email, message,
