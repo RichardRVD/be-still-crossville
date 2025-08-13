@@ -4,6 +4,8 @@ import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import SocialLinks from './components/SocialLinks'
 import ScrollManager from "./components/ScrollManager";
+import Admin from './pages/Admin';
+import RequireAuth from './components/RequireAuth'
 
 export default function App() {
   return (
