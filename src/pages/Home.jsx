@@ -1,11 +1,20 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import Hero from "../components/Hero";
+import Seo from "../components/Seo";
 import { FaHiking, FaWater, FaLeaf, FaMapMarkerAlt, FaShieldAlt, FaHandshake } from "react-icons/fa";
 
 export default function Home() {
   return (
     <>
       <Hero />
+
+      <Seo
+        title="Be Still Crossville — Guided Kayak & Hike Tours in Cumberland County, TN"
+        description="Small-group kayak tours, guided hikes, and community cleanups around Crossville, TN. Soft launch: pay what you want for volunteers."
+        url="https://stillcrossville.com/"
+        image="https://stillcrossville.com/og.jpg"  // optional; place an image later
+      />
 
       {/* What we offer */}
       <section id="learn-more" className="max-w-5xl mx-auto px-4 py-12">
@@ -15,18 +24,19 @@ export default function Home() {
           {[
             {
               title: "Guided Hikes",
-              desc: "Beginner-friendly trails with local history and nature highlights.",
+              desc: "Beginner‑friendly trails with local history and waterfall highlights.",
               icon: <FaHiking className="text-brand.heron/90" size={20} />,
             },
             {
               title: "Kayak Trips",
-              desc: "Calm water paddles perfect for sunset and early mornings.",
+              desc: "Calm‑water paddles on local lakes and rivers — sunrise to sunset.",
               icon: <FaWater className="text-brand.heron/90" size={20} />,
             },
             {
-              title: "Nature Walks",
-              desc: "Gentle walks focused on presence and observation.",
-              icon: <FaLeaf className="text-brand.heron/90" size={20} />,
+              title: "Community & Cleanups",
+              desc: "Beach cleanups, stewardship days, and volunteer meetups.",
+              // Using the leaf to represent stewardship; feel free to swap later.
+              icon: <FaHandshake className="text-brand.heron/90" size={20} />,
             },
           ].map((c) => (
             <div key={c.title} className="card">
@@ -53,13 +63,13 @@ export default function Home() {
               },
               {
                 title: "Safety First",
-                desc: "Guided with proper gear, safety protocols, and local knowledge.",
+                desc: "Clear planning, right‑sized groups, and weather‑aware guiding.",
                 icon: <FaShieldAlt size={24} className="mx-auto text-brand.heron" />,
               },
               {
                 title: "Pay What You Want",
-                desc: "Soft launch pricing for volunteers—accessible for everyone.",
-                icon: <FaHandshake size={24} className="mx-auto text-brand.heron" />,
+                desc: "Soft‑launch pricing so everyone can join in.",
+                icon: <FaLeaf size={24} className="mx-auto text-brand.heron" />,
               },
             ].map((item) => (
               <div key={item.title} className="bg-white rounded-xl shadow-sm p-4">
@@ -68,6 +78,16 @@ export default function Home() {
                 <p className="text-sm text-black/70 mt-1">{item.desc}</p>
               </div>
             ))}
+          </div>
+
+          {/* CTA */}
+          <div className="text-center mt-8">
+            <Link to="/tours" className="button-primary inline-block">
+              View Tours
+            </Link>
+            <p className="text-xs text-black/60 mt-2">
+              Soft launch: Pay What You Want for volunteers.
+            </p>
           </div>
         </div>
       </section>
