@@ -4,6 +4,7 @@ import { FaHeart, FaShieldAlt, FaMapMarkedAlt } from "react-icons/fa";
 import Accordion from "../components/Accordion";
 import Logo from "../components/Logo";
 import { listAboutGallery } from "../services/storage";
+import Seo from "../components/Seo";
 
 export default function About() {
   const [lightbox, setLightbox] = useState({ open: false, src: null });
@@ -66,6 +67,12 @@ export default function About() {
           around Crossville, TN and Upper Cumberland's beauty.
         </p>
       </header>
+
+      <Seo
+        title="About — Be Still Crossville"
+        description="Our story, values, and how we keep your experience safe, simple, and peaceful."
+        url="https://stillcrossville.com/about"
+      />
 
       {/* Story & Mission */}
       <div className="grid md:grid-cols-2 gap-6 mb-10">
