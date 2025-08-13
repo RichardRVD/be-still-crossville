@@ -1,12 +1,21 @@
+// src/main.jsx
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import './styles/index.css'
+
 import App from './App'
+
+// pages
 import Home from './pages/Home'
 import Tours from './pages/Tours'
 import About from './pages/About'
 import Contact from './pages/Contact'
+import Login from './pages/Login'
+import Admin from './pages/Admin'
+
+// auth gate
+import RequireAuth from './components/RequireAuth'
 
 const router = createBrowserRouter([
   {
@@ -16,7 +25,23 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: 'tours', element: <Tours /> },
       { path: 'about', element: <About /> },
-      { path: 'contact', element: <Contact />}
+      { path: 'contact', element: <Contact /> },
+
+      // public login
+      { path: 'login', element: <Login /> },
+
+      // protected admin
+      {
+        path: 'admin',
+        element: (
+          <RequireAuth>
+            <Admin />
+          </RequireAuth>
+        ),
+      },
+
+      // optional 404
+      { path: '*', element: <Home /> },
     ],
   },
 ])
