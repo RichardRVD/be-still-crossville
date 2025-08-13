@@ -1,4 +1,6 @@
 // supabase/functions/notify-signup/index.ts
+// Sends admin email (From: “Be Still Crossville — Booking <booking@…>”)
+// and an acknowledgement to the user.
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
@@ -19,6 +21,7 @@ type SignupPayload = {
   tour?: string;
   dates?: string;
   notes?: string;
+  preferred_contact?: "email" | "text" | string;
   _meta?: {
     ts?: number;
     userAgent?: string;
@@ -27,8 +30,8 @@ type SignupPayload = {
 };
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
-const TO_ADMIN = Deno.env.get("CONTACT_TO_EMAIL")!;
-const FROM_BOOKINGS = Deno.env.get("CONTACT_FROM_EMAIL_BOOKINGS")!;
+const TO_ADMIN       = Deno.env.get("CONTACT_TO_EMAIL")!;
+const FROM_BOOKINGS  = Deno.env.get("CONTACT_FROM_EMAIL_BOOKINGS")!;
 
 async function sendViaResend(body: Record<string, unknown>) {
   const resp = await fetch("https://api.resend.com/emails", {
@@ -54,6 +57,7 @@ async function emailAdmin(p: SignupPayload) {
 Name:  ${p.name ?? ""}
 Email: ${p.email ?? ""}
 Phone: ${p.phone ?? ""}
+Preferred: ${p.preferred_contact ?? "email"}
 Tour:  ${p.tour ?? ""}
 Dates: ${p.dates ?? ""}
 Notes: ${p.notes ?? ""}
@@ -66,10 +70,11 @@ When: ${new Date(p._meta?.ts || Date.now()).toISOString()}
   const html = `
   <h2>New booking request</h2>
   <p><strong>Name:</strong> ${p.name ?? ""}<br/>
-  <strong>Email:</strong> ${p.email ?? ""}<br/>
-  <strong>Phone:</strong> ${p.phone ?? ""}<br/>
-  <strong>Tour:</strong> ${p.tour ?? ""}<br/>
-  <strong>Dates:</strong> ${p.dates ?? ""}</p>
+     <strong>Email:</strong> ${p.email ?? ""}<br/>
+     <strong>Phone:</strong> ${p.phone ?? ""}<br/>
+     <strong>Preferred:</strong> ${p.preferred_contact ?? "email"}<br/>
+     <strong>Tour:</strong> ${p.tour ?? ""}<br/>
+     <strong>Dates:</strong> ${p.dates ?? ""}</p>
   <p><strong>Notes:</strong><br/>${(p.notes ?? "").replace(/\n/g, "<br/>")}</p>
   <hr/>
   <p style="font-size:12px;color:#666">
@@ -94,16 +99,13 @@ async function emailUserAck(p: SignupPayload) {
   const subject = "We received your tour request — Be Still Crossville";
   const text = `Hi ${p.name ?? "there"},
 
-Thanks for your interest in "${p.tour ?? "a tour"}". We received your request and will follow up by email soon to confirm details and next steps.
-
-If you'd like to contribute now, you can use our Pay‑What‑You‑Want link on the site anytime. Cash/Venmo on the day is fine too.
+Thanks for your interest in "${p.tour ?? "a tour"}". We received your request and will follow up by ${p.preferred_contact ?? "email"} to confirm details and next steps.
 
 — Be Still Crossville
 `;
   const html = `
   <p>Hi ${p.name ?? "there"},</p>
-  <p>Thanks for your interest in <strong>${p.tour ?? "a tour"}</strong>. We received your request and will follow up by email soon to confirm details and next steps.</p>
-  <p>If you’d like to contribute now, you can use our Pay‑What‑You‑Want link on the site anytime. Cash/Venmo on the day is fine too.</p>
+  <p>Thanks for your interest in <strong>${p.tour ?? "a tour"}</strong>. We received your request and will follow up by <strong>${p.preferred_contact ?? "email"}</strong> to confirm details and next steps.</p>
   <p>— Be Still Crossville</p>`;
 
   return sendViaResend({
