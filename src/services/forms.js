@@ -6,17 +6,12 @@ const ANON     = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 let inFlight = false;
 
-const clamp  = (s = '', max = 500) => s.toString().trim().slice(0, max);
+const clamp   = (s = '', max = 500) => s.toString().trim().slice(0, max);
 const isEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
 // ---------- Volunteer / Tours form ----------
 export async function submitVolunteerForm(formData) {
-  // Honeypot
-  if ((formData.get('_gotcha') || '').toString().trim()) {
-    console.warn('Honeypot caught a bot; ignoring submit.');
-    return true;
-  }
-
+  if ((formData.get('_gotcha') || '').toString().trim()) return true;
   if (inFlight) return true;
   inFlight = true;
 
@@ -36,31 +31,33 @@ export async function submitVolunteerForm(formData) {
     const { error } = await supabase.from('signups').insert(payload);
     if (error) throw new Error(error.message);
 
+    // notify email (non‑blocking)
     try {
-      await fetch(`${BASE_URL}/functions/v1/notify-signup`, {
+      const res = await fetch(`${BASE_URL}/functions/v1/notify-signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${ANON}`,
+          'apikey': ANON,
         },
         body: JSON.stringify({
-              ...payload,
-              _meta: {
-                ts: Date.now(),
-                userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
-                origin: typeof location !== 'undefined' ? location.origin : '',
-              },
-            }),
-            credentials: 'omit',
-            mode: 'cors',
-          });
-         if (!res.ok) {
-           const txt = await res.text().catch(() => '');
-           console.warn('notify-signup failed:', res.status, txt);
-        }
-        } catch (e) {
-          console.warn('Notify email failed (non-blocking):', e);
-        }
+          ...payload,
+          _meta: {
+            ts: Date.now(),
+            userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+            origin: typeof location !== 'undefined' ? location.origin : '',
+          },
+        }),
+        credentials: 'omit',
+        mode: 'cors',
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        console.warn('notify-signup failed:', res.status, txt);
+      }
+    } catch (e) {
+      console.warn('Notify email failed (non-blocking):', e);
+    }
 
     return true;
   } finally {
@@ -68,28 +65,26 @@ export async function submitVolunteerForm(formData) {
   }
 }
 
+// ---------- Contact form ----------
 export async function submitContactForm(formData) {
   if ((formData.get('_gotcha') || '').toString().trim()) return true;
 
-  const name = (formData.get('name') || '').toString().trim().slice(0, 100);
-  const email = (formData.get('email') || '').toString().trim().toLowerCase();
-  const message = (formData.get('message') || '').toString().trim().slice(0, 2000);
+  const name = clamp(formData.get('name'), 100);
+  const email = clamp((formData.get('email') || '').toString().toLowerCase(), 200);
+  const message = clamp(formData.get('message'), 2000);
 
-  if (!name)   throw new Error('Please enter your name.');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Please enter a valid email.');
+  if (!name) throw new Error('Please enter your name.');
+  if (!isEmail(email)) throw new Error('Please enter a valid email.');
   if (!message) throw new Error('Please enter a message.');
 
-  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/contact`;
-
-  const res = await fetch(url, {
+  const res = await fetch(`${BASE_URL}/functions/v1/contact`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+      'Authorization': `Bearer ${ANON}`,
+      'apikey': ANON,
     },
     body: JSON.stringify({ name, email, message }),
-    credentials: 'omit',
-    mode: 'cors',
   });
 
   if (!res.ok) throw new Error(await res.text().catch(() => 'Request failed'));
