@@ -1,72 +1,61 @@
 import { supabase } from "./supabase";
 
-/** List public URLs for gallery images in `media/about`.
- *  Falls back to probing numbered files if list() returns nothing.
- */
+const projectBase = import.meta.env.VITE_SUPABASE_URL;  // https://xxxxx.supabase.co
+const OBJECT_BASE  = `${projectBase}/storage/v1/object/public`;
+
+// Encode each path segment but keep slashes
+const encodePath = (p) => p.split("/").map(encodeURIComponent).join("/");
+
+function buildImageVariants(bucket, path) {
+  const p = encodePath(path);
+  const original = `${OBJECT_BASE}/${bucket}/${p}`;
+  // Keep the shape so About.jsx code doesn't need a new type
+  return { thumb: original, thumb2x: original, full: original, original };
+}
+
+/** List gallery image variants in `media/about` */
 export async function listAboutGallery() {
+  const bucket = "media";
+  let files = [];
+
   try {
     const { data, error } = await supabase
-      .storage
-      .from("media")
+      .storage.from(bucket)
       .list("about", { limit: 200, sortBy: { column: "name", order: "asc" } });
 
     if (!error && Array.isArray(data) && data.length) {
-      const urls = data
+      files = data
         .filter(f => /\.(jpe?g|png|webp)$/i.test(f.name))
-        .map(f => supabase.storage.from("media").getPublicUrl(`about/${f.name}`).data.publicUrl);
-
-      if (urls.length) return urls;
+        .map(f => `about/${f.name}`);
     }
-  } catch (_) {
-    // ignore and use fallback
+  } catch {/* ignore; fallback below */}
+
+  // Fallback: probe numbered names if list() returns nothing
+  if (!files.length) {
+    const exts = ["jpeg", "jpg", "png", "webp"];
+    const candidates = [];
+    for (let i = 1; i <= 20; i++) for (const ext of exts) candidates.push(`about/about${i}.${ext}`);
+
+    const ok = [];
+    await Promise.all(candidates.map(async (key) => {
+      const url = supabase.storage.from(bucket).getPublicUrl(key).data.publicUrl;
+      try { const r = await fetch(url, { method: "HEAD" }); if (r.ok) ok.push(key); } catch {}
+    }));
+
+    files = ok.sort((a, b) => (parseInt(a.match(/about(\d+)/i)?.[1]||9999,10) - parseInt(b.match(/about(\d+)/i)?.[1]||9999,10)));
   }
 
-  // 2) Fallback: probe common numbered filenames (about1..about20)
-  const exts = ["jpeg", "jpg", "png", "webp"];
-  const candidates = [];
-  for (let i = 1; i <= 20; i++) {
-    for (const ext of exts) {
-      candidates.push(`about/${`about${i}.${ext}`}`);
-    }
-  }
-
-  const urls = [];
-  await Promise.all(
-    candidates.map(async (key) => {
-      const url = supabase.storage.from("media").getPublicUrl(key).data.publicUrl;
-      try {
-        const res = await fetch(url, { method: "HEAD" });
-        if (res.ok) urls.push(url);
-      } catch {
-        /* skip */
-      }
-    })
-  );
-
-  urls.sort((a, b) => {
-    const na = a.match(/about(\d+)/i)?.[1];
-    const nb = b.match(/about(\d+)/i)?.[1];
-    return (parseInt(na || 9999, 10) - parseInt(nb || 9999, 10));
-  });
-
-  return urls;
+  return files.map(path => buildImageVariants(bucket, path));
 }
 
 export async function getHeroImageUrl() {
-  const specific = supabase.storage
-    .from("media")
-    .getPublicUrl("hero/hero.jpeg").data.publicUrl;
+  const specific = supabase.storage.from("media").getPublicUrl("hero/hero.jpeg").data.publicUrl;
   if (specific) return specific;
 
-  const { data, error } = await supabase
-    .storage
-    .from("media")
+  const { data, error } = await supabase.storage.from("media")
     .list("hero", { limit: 100, sortBy: { column: "name", order: "asc" } });
 
-  if (error || !data || !data.length) return null;
-
+  if (error || !data?.length) return null;
   const firstImg = data.find(f => /\.(jpe?g|png|webp)$/i.test(f.name));
-  if (!firstImg) return null;
-
-  return supabase.storage.from("media").getPublicUrl(`hero/${firstImg.name}`).data.publicUrl;
+  return firstImg ? supabase.storage.from("media").getPublicUrl(`hero/${firstImg.name}`).data.publicUrl : null;
 }

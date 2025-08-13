@@ -7,49 +7,34 @@ import { listAboutGallery } from "../services/storage";
 import Seo from "../components/Seo";
 
 export default function About() {
+  // lightbox now stores the *full-size* URL
   const [lightbox, setLightbox] = useState({ open: false, src: null });
-  const [galleryUrls, setGalleryUrls] = useState([]);
+  // gallery now holds objects: { thumb, thumb2x, full, original }
+  const [gallery, setGallery] = useState([]);
   const [loadingGallery, setLoadingGallery] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const urls = await listAboutGallery();
-        if (!cancelled) setGalleryUrls(urls.slice(0, 15));
+        const items = await listAboutGallery(); // returns variant objects
+        if (!cancelled) setGallery(items.slice(0, 15));
       } catch (e) {
         console.warn("Gallery load failed:", e);
       } finally {
         if (!cancelled) setLoadingGallery(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   const faqItems = useMemo(
     () => [
-      {
-        q: "Do I need prior experience?",
-        a: "Nope. Our hikes and calm-water paddles are beginner friendly. We set the pace based on the group.",
-      },
-      {
-        q: "What should I bring?",
-        a: "Water, sunscreen, comfy shoes. For kayaking: quick dry clothing and a towel. We’ll confirm specifics by email.",
-      },
-      {
-        q: "What happens if the weather looks bad?",
-        a: "Safety first, if conditions aren’t right, we reschedule. We’ll email you updates the day before or morning of.",
-      },
-      {
-        q: "How does Pay What You Want work?",
-        a: "During our soft launch, you choose the amount, via Stripe, cash, or Venmo after you sign up.",
-      },
-      {
-        q: "Where do we meet?",
-        a: "We’ll email exact meet-up info (like Meadow Park Lake or the trailhead) after you sign up for a tour.",
-      },
+      { q: "Do I need prior experience?", a: "Nope. Our hikes and calm-water paddles are beginner friendly. We set the pace based on the group." },
+      { q: "What should I bring?", a: "Water, sunscreen, comfy shoes. For kayaking: quick dry clothing and a towel. We’ll confirm specifics by email." },
+      { q: "What happens if the weather looks bad?", a: "Safety first, if conditions aren’t right, we reschedule. We’ll email you updates the day before or morning of." },
+      { q: "How does Pay What You Want work?", a: "During our soft launch, you choose the amount, via Stripe, cash, or Venmo after you sign up." },
+      { q: "Where do we meet?", a: "We’ll email exact meet-up info (like Meadow Park Lake or the trailhead) after you sign up for a tour." },
     ],
     []
   );
@@ -96,21 +81,9 @@ export default function About() {
       {/* Values */}
       <div className="grid md:grid-cols-3 gap-4 mb-10">
         {[
-          {
-            icon: <FaHeart className="text-brand.heron" size={22} />,
-            title: "People Centered",
-            desc: "Small groups, welcoming pace, and room to breathe.",
-          },
-          {
-            icon: <FaShieldAlt className="text-brand.heron" size={22} />,
-            title: "Safety First",
-            desc: "Gear checks, weather awareness, and clear expectations.",
-          },
-          {
-            icon: <FaMapMarkedAlt className="text-brand.heron" size={22} />,
-            title: "Local Focus",
-            desc: "Upper Cumberland (and surrounding areas) lakes, overlooks, and trails we know well.",
-          },
+          { icon: <FaHeart className="text-brand.heron" size={22} />, title: "People Centered", desc: "Small groups, welcoming pace, and room to breathe." },
+          { icon: <FaShieldAlt className="text-brand.heron" size={22} />, title: "Safety First", desc: "Gear checks, weather awareness, and clear expectations." },
+          { icon: <FaMapMarkedAlt className="text-brand.heron" size={22} />, title: "Local Focus", desc: "Upper Cumberland (and surrounding areas) lakes, overlooks, and trails we know well." },
         ].map((v) => (
           <div key={v.title} className="card">
             <div className="flex items-center gap-2">
@@ -122,17 +95,6 @@ export default function About() {
         ))}
       </div>
 
-      {/* Safety Note */}
-      <div className="rounded-2xl border border-black/5 bg-brand.heron/5 p-4 mb-10">
-        <h2 className="font-semibold text-brand.heron mb-1">How we keep it safe</h2>
-        <ul className="list-disc list-inside text-sm text-black/70 space-y-1">
-          <li>Clear difficulty, distance, and timing before every tour.</li>
-          <li>Group size kept small; no one gets left behind.</li>
-          <li>Basic gear available; we’ll tell you exactly what to bring.</li>
-          <li>Weather and water checked day-of; we reschedule if conditions aren’t right.</li>
-        </ul>
-      </div>
-
       {/* Gallery (from Supabase Storage) */}
       <div className="mb-10">
         <h2 className="font-semibold text-brand.heron mb-3">A glimpse of the quiet</h2>
@@ -141,28 +103,30 @@ export default function About() {
           <div className="w-full rounded-xl border border-dashed border-black/20 bg-black/5 p-6 text-center text-black/50">
             Loading photos…
           </div>
-        ) : galleryUrls.length === 0 ? (
+        ) : gallery.length === 0 ? (
           <div className="w-full rounded-xl border border-dashed border-black/20 bg-black/5 p-6 text-center text-black/50">
             Add images to <code>Storage → media/about</code> to see them here.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {galleryUrls.map((src, i) => (
+            {gallery.map((img, i) => (
               <button
-                key={src}
+                key={img.original}
                 type="button"
-                onClick={() => setLightbox({ open: true, src })}
+                onClick={() => setLightbox({ open: true, src: img.full })}
                 className="group relative overflow-hidden rounded-xl border border-black/5 focus:outline-none"
                 aria-label={`Open image ${i + 1}`}
               >
                 <img
-                  src={src}
+                  src={img.thumb}
+                  srcSet={`${img.thumb} 1x, ${img.thumb2x} 2x`}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   alt={`Quiet moments on the Plateau — photo ${i + 1}`}
                   className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                   loading={i < 2 ? "eager" : "lazy"}
                   decoding="async"
-                  crossOrigin="anonymous"
-                  referrerPolicy="no-referrer-when-downgrade"
+                  // Helps avoid layout shift before image paints:
+                  style={{ aspectRatio: "16 / 9", backgroundColor: "rgba(0,0,0,0.04)" }}
                 />
                 <span className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
               </button>
@@ -171,6 +135,7 @@ export default function About() {
         )}
       </div>
 
+      {/* Lightbox (simple) */}
       {lightbox.open && (
         <div
           className="fixed inset-0 z-50 bg-black/70 grid place-items-center p-4"
@@ -179,10 +144,11 @@ export default function About() {
           onClick={() => setLightbox({ open: false, src: null })}
         >
           <img
-            src={lightbox.src}
+            src={lightbox.src ?? ""}
             alt="Enlarged gallery"
             className="max-h-[85vh] max-w-[90vw] rounded-xl shadow-2xl"
             onClick={(e) => e.stopPropagation()}
+            decoding="async"
           />
         </div>
       )}
