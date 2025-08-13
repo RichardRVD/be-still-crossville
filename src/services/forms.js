@@ -1,18 +1,21 @@
 // src/services/forms.js
 import { supabase } from "./supabase";
 
-const BASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const ANON     = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const BASE_URL = import.meta.env.VITE_SUPABASE_URL;        // e.g. https://xxxx.supabase.co
+const ANON     = import.meta.env.VITE_SUPABASE_ANON_KEY;   // anon key for Authorization header
 
 let inFlight = false;
 
-const clamp = (s = "", max = 500) => s.toString().trim().slice(0, max);
+const clamp  = (s = "", max = 500) => s.toString().trim().slice(0, max);
 const isEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
-// ---------- Volunteer / Tours form ----------
+/** -------------------------
+ *  Tours / Volunteer form
+ *  ------------------------- */
 export async function submitVolunteerForm(formData) {
-  // Honeypot
+  // spam honeypot
   if ((formData.get("_gotcha") || "").toString().trim()) return true;
+
   if (inFlight) return true;
   inFlight = true;
 
@@ -29,14 +32,15 @@ export async function submitVolunteerForm(formData) {
       preferred_contact: clamp((formData.get("preferred_contact") || "email").toString(), 10),
     };
 
+    // basic validation
     if (!payload.name) throw new Error("Please enter your name.");
     if (!isEmail(payload.email)) throw new Error("Please enter a valid email.");
 
-    // Save to DB (your existing table)
+    // 1) Save to DB (table: signups)
     const { error } = await supabase.from("signups").insert(payload);
     if (error) throw new Error(error.message);
 
-    // Notify via Edge Function (no `apikey` header)
+    // 2) Notify admins + send user ack via Edge Function (non-blocking)
     try {
       const res = await fetch(`${BASE_URL}/functions/v1/notify-signup`, {
         method: "POST",
@@ -44,7 +48,7 @@ export async function submitVolunteerForm(formData) {
         credentials: "omit",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${ANON}`,
+          "Authorization": `Bearer ${ANON}`,   // do NOT send 'apikey' header
         },
         body: JSON.stringify({
           ...payload,
@@ -69,8 +73,11 @@ export async function submitVolunteerForm(formData) {
   }
 }
 
-// ---------- Contact form ----------
+/** -------------------------
+ *  Contact form
+ *  ------------------------- */
 export async function submitContactForm(formData) {
+  // spam honeypot
   if ((formData.get("_gotcha") || "").toString().trim()) return true;
 
   const payload = {
@@ -79,21 +86,23 @@ export async function submitContactForm(formData) {
     phone:   clamp(formData.get("phone"), 40), // optional
     message: clamp(formData.get("message"), 2000),
 
-    // NEW
+    // NEW: preferred contact method (email | text)
     preferred_contact: clamp((formData.get("preferred_contact") || "email").toString(), 10),
   };
 
+  // basic validation
   if (!payload.name) throw new Error("Please enter your name.");
   if (!isEmail(payload.email)) throw new Error("Please enter a valid email.");
   if (!payload.message) throw new Error("Please enter a message.");
 
+  // Call Edge Function (admin email + user auto-reply)
   const res = await fetch(`${BASE_URL}/functions/v1/contact`, {
     method: "POST",
     mode: "cors",
     credentials: "omit",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${ANON}`,
+      "Authorization": `Bearer ${ANON}`,     // do NOT send 'apikey' header
     },
     body: JSON.stringify({
       ...payload,
@@ -109,5 +118,6 @@ export async function submitContactForm(formData) {
     const txt = await res.text().catch(() => "Request failed");
     throw new Error(txt);
   }
+
   return true;
 }
