@@ -157,9 +157,12 @@ export default function About() {
               >
                 <img
                   src={src}
-                  alt={`About gallery ${i + 1}`}
+                  alt={`Quiet moments on the Plateau — photo ${i + 1}`}
                   className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                  loading="lazy"
+                  loading={i < 2 ? "eager" : "lazy"}
+                  decoding="async"
+                  crossOrigin="anonymous"
+                  referrerPolicy="no-referrer-when-downgrade"
                 />
                 <span className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
               </button>
