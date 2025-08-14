@@ -1,6 +1,21 @@
+/* Option 1: Montserrat – clean, modern, easy to read */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
+/* Option 2: Lora – classy serif with a natural feel */
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&display=swap');
+
+/* Option 3: Raleway – elegant sans-serif with more character */
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap');
+
+/* Option 4: Playfair Display – bold, outdoor-magazine style serif */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap');
+
+/* Option 5: Poppins – modern, rounded edges, friendly feel */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 
 .button-primary {
   @apply inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium bg-brand-heron text-white hover:opacity-90 transition;
@@ -16,4 +31,24 @@
 
 .react-calendar__tile--hasEvent:hover {
   @apply bg-blue-200/60; /* slightly darker hover */
+}
+
+/*body {
+  font-family: 'Montserrat', sans-serif;
+}*/
+
+/*body {
+  font-family: 'Raleway', sans-serif;
+}*/
+
+/*body {
+  font-family: 'Lora', serif;
+}*/
+
+/*body {
+  font-family: 'Cabin', sans-serif;
+}*/
+
+body {
+  font-family: 'Playfair Display', serif;
 }
