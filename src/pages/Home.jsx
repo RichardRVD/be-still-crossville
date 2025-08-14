@@ -8,7 +8,6 @@ export default function Home() {
   return (
     <>
       <Hero />
-
       <Seo
         title="Be Still Crossville — Guided Kayak & Hike Tours in Cumberland County, TN"
         description="Small-group kayak tours, guided hikes, and community cleanups around Crossville, TN. Soft launch: pay what you want for volunteers."
