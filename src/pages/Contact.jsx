@@ -61,6 +61,33 @@ export default function Contact() {
         <meta name="twitter:image" content="https://stillcrossville.com/og.jpg" />
       </Helmet>
 
+      {/* JSON-LD: ContactPage + Organization contactPoint */}
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ContactPage",
+            "name": "Contact — Be Still Crossville",
+            "url": "https://stillcrossville.com/contact"
+          })}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "Be Still Crossville",
+            "url": "https://stillcrossville.com/",
+            "contactPoint": [{
+              "@type": "ContactPoint",
+              "contactType": "customer support",
+              "email": "info@stillcrossville.com",
+              "areaServed": "US",
+              "availableLanguage": ["English"]
+            }]
+          })}
+        </script>
+      </Helmet>
+
       <section className="max-w-5xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-semibold text-brand.heron mb-6">Contact</h1>
 
