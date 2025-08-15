@@ -1,30 +1,15 @@
 // src/pages/Tours.jsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useForm } from "../hooks/useForm";
 import { submitVolunteerForm } from "../services/forms";
 import TourCalendar from "../components/TourCalendar";
-import { listPublicEvents } from "../services/events";
 
 export default function Tours() {
   const { status, error, handleSubmit } = useForm(submitVolunteerForm);
   const [selectedTour, setSelectedTour] = useState("Sunset Kayak – Meadow Park Lake");
   const [filter, setFilter] = useState("All");
   const formRef = useRef(null);
-  const [events, setEvents] = useState([]);
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const rows = await listPublicEvents();
-        if (!cancelled) setEvents(rows || []);
-      } catch (e) {
-        console.warn("Failed to load events for JSON-LD:", e);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-  // -------------------------------------------------------------------
 
   const TOURS = useMemo(
     () => [
@@ -42,10 +27,19 @@ export default function Tours() {
   );
 
   const FILTERS = ["All", "Kayak", "Hike", "Walk", "Seasonal"];
+
   const visibleTours = useMemo(
     () => (filter === "All" ? TOURS : TOURS.filter((t) => t.category === filter)),
     [filter, TOURS]
   );
+
+  const tourTitlesForSelect = useMemo(() => {
+    const base = TOURS.map(t => t.title);
+    if (selectedTour && !base.includes(selectedTour)) {
+      return [...base, selectedTour];
+    }
+    return base;
+  }, [TOURS, selectedTour]);
 
   function selectTour(title) {
     setSelectedTour(title);
@@ -58,7 +52,7 @@ export default function Tours() {
     let dateLabel = "";
 
     if (evOrDate?.start_at) {
-      const tourTitle = evOrDate.tour || evOrDate.title || selectedTour;
+      const tourTitle = evOrDate.title || evOrDate.tour || selectedTour;
       dateLabel = formatDateRange(evOrDate.start_at, evOrDate.end_at);
       setSelectedTour(tourTitle);
     } else if (evOrDate instanceof Date) {
@@ -106,50 +100,6 @@ export default function Tours() {
         <meta name="twitter:image" content="https://stillcrossville.com/og.jpg" />
       </Helmet>
 
-      {/* JSON-LD for the list + individual events (safe even if empty) */}
-      <Helmet>
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "ItemList",
-            "itemListElement": (events || []).map((ev, i) => ({
-              "@type": "ListItem",
-              "position": i + 1,
-              "url": "https://stillcrossville.com/tours"
-            }))
-          })}
-        </script>
-
-        {(events || []).map((ev) => (
-          <script key={ev.id} type="application/ld+json">
-            {JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Event",
-              "name": ev.title || ev.tour || "Tour",
-              "startDate": ev.start_at,
-              "endDate": ev.end_at || undefined,
-              "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-              "eventStatus": "https://schema.org/EventScheduled",
-              "location": {
-                "@type": "Place",
-                "name": ev.location || "Crossville, TN",
-                "address": {
-                  "@type": "PostalAddress",
-                  "addressLocality": "Crossville",
-                  "addressRegion": "TN",
-                  "addressCountry": "US"
-                }
-              },
-              "organizer": {
-                "@type": "Organization",
-                "name": "Be Still Crossville",
-                "url": "https://stillcrossville.com/"
-              }
-            })}
-          </script>
-        ))}
-      </Helmet>
-
       <h1 className="text-3xl font-semibold text-brand.heron mb-6">Tours &amp; Sign Up</h1>
 
       <div className="grid md:grid-cols-2 gap-8">
@@ -162,7 +112,7 @@ export default function Tours() {
 
           {/* Filters */}
           <div className="flex flex-wrap gap-2">
-            {["All", "Kayak", "Hike", "Walk", "Seasonal"].map((f) => {
+            {FILTERS.map((f) => {
               const active = f === filter;
               return (
                 <button
@@ -184,7 +134,7 @@ export default function Tours() {
 
           {/* Tour cards */}
           <div className="space-y-3">
-            {TOURS.filter((t) => filter === "All" || t.category === filter).map((t) => {
+            {visibleTours.map((t) => {
               const active = selectedTour === t.title;
               return (
                 <div
@@ -231,7 +181,6 @@ export default function Tours() {
 
         {/* Right: form */}
         <form ref={formRef} onSubmit={handleSubmit} className="card space-y-3">
-          <h2 className="font-semibold text-brand.heron">Volunteer Sign-Up (Pay What You Want)</h2>
           <p className="text-sm text-black/70">
             Soft launch: help us refine these experiences. You choose the amount.
           </p>
@@ -270,8 +219,8 @@ export default function Tours() {
               onChange={(e) => setSelectedTour(e.target.value)}
               className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2"
             >
-              {TOURS.map((t) => (
-                <option key={t.title} value={t.title}>{t.title}</option>
+              {tourTitlesForSelect.map((title) => (
+                <option key={title} value={title}>{title}</option>
               ))}
             </select>
           </label>
@@ -301,7 +250,6 @@ export default function Tours() {
           {status === "success" && (
             <div className="mt-3 rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-800">
               <p><strong>Thanks!</strong> We’ll be in touch soon.</p>
-
               {import.meta.env.VITE_STRIPE_PWYW_URL && (
                 <a
                   className="mt-3 inline-block rounded-xl bg-brand-heron px-4 py-2 font-medium text-white hover:opacity-90"
@@ -312,7 +260,6 @@ export default function Tours() {
                   Pay What You Want (optional)
                 </a>
               )}
-
               <p className="mt-2 text-xs text-gray-600">
                 Opens a secure Stripe page. Prefer cash or Venmo? You can pay later.
               </p>
