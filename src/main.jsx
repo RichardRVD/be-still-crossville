@@ -2,6 +2,7 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { HelmetProvider } from 'react-helmet-async'
 import './styles/index.css'
 
 import App from './App'
@@ -26,11 +27,7 @@ const router = createBrowserRouter([
       { path: 'tours', element: <Tours /> },
       { path: 'about', element: <About /> },
       { path: 'contact', element: <Contact /> },
-
-      // public login
       { path: 'login', element: <Login /> },
-
-      // protected admin
       {
         path: 'admin',
         element: (
@@ -39,8 +36,6 @@ const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
-
-      // optional 404
       { path: '*', element: <Home /> },
     ],
   },
@@ -48,6 +43,8 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <HelmetProvider>
+      <RouterProvider router={router} />
+    </HelmetProvider>
   </React.StrictMode>
 )
