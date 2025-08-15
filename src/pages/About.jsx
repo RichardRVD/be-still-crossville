@@ -1,10 +1,11 @@
+// src/pages/About.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { FaHeart, FaShieldAlt, FaMapMarkedAlt } from "react-icons/fa";
 import Accordion from "../components/Accordion";
 import Logo from "../components/Logo";
 import { listAboutGallery } from "../services/storage";
-import Seo from "../components/Seo";
 
 export default function About() {
   const [lightbox, setLightbox] = useState({ open: false, src: null });
@@ -38,130 +39,152 @@ export default function About() {
   );
 
   return (
-    <section className="max-w-5xl mx-auto px-4 py-12">
-      {/* Heading */}
-      <header className="text-center mb-10">
-        <Logo className="mx-auto w-16 h-16 mb-4" />
-        <h1 className="text-3xl md:text-4xl font-semibold text-brand.heron">
-          About Be Still Crossville
-        </h1>
-        <p className="mt-2 text-black/70">
-          Local, small, and people-first. We help folks slow down and enjoy the lakes and hikes
-          around Crossville, TN and Upper Cumberland's beauty.
-        </p>
-      </header>
+    <>
+      <Helmet>
+        <title>About — Be Still Crossville</title>
+        <meta
+          name="description"
+          content="Our story, values, and how we keep your experience safe, simple, and peaceful."
+        />
+        <link rel="canonical" href="https://stillcrossville.com/about" />
 
-      <Seo
-        title="About — Be Still Crossville"
-        description="Our story, values, and how we keep your experience safe, simple, and peaceful."
-        url="https://stillcrossville.com/about"
-      />
+        {/* Social */}
+        <meta property="og:title" content="About — Be Still Crossville" />
+        <meta
+          property="og:description"
+          content="Our story, values, and how we keep your experience safe, simple, and peaceful."
+        />
+        <meta property="og:image" content="https://stillcrossville.com/og.jpg" />
+        <meta property="og:url" content="https://stillcrossville.com/about" />
+        <meta property="og:type" content="website" />
 
-      {/* Story & Mission */}
-      <div className="grid md:grid-cols-2 gap-6 mb-10">
-        <div className="card">
-          <h2 className="font-semibold text-brand.heron mb-2">Our Story</h2>
-          <p className="text-sm text-black/70">
-            We started Be Still Crossville to share the quiet side of the Cumberland Plateau —
-            calm water paddles, beginner-friendly hikes, and nature walks where conversation and
-            observation matter as much as miles. It’s community first, adventure second.
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="About — Be Still Crossville" />
+        <meta
+          name="twitter:description"
+          content="Our story, values, and how we keep your experience safe, simple, and peaceful."
+        />
+        <meta name="twitter:image" content="https://stillcrossville.com/og.jpg" />
+      </Helmet>
+
+      <section className="max-w-5xl mx-auto px-4 py-12">
+        {/* Heading */}
+        <header className="text-center mb-10">
+          <Logo className="mx-auto w-16 h-16 mb-4" />
+          <h1 className="text-3xl md:text-4xl font-semibold text-brand.heron">
+            About Be Still Crossville
+          </h1>
+          <p className="mt-2 text-black/70">
+            Local, small, and people-first. We help folks slow down and enjoy the lakes and hikes
+            around Crossville, TN and the Upper Cumberland’s beauty.
           </p>
-        </div>
-        <div className="card">
-          <h2 className="font-semibold text-brand.heron mb-2">Our Mission</h2>
-          <p className="text-sm text-black/70">
-            Create accessible outdoor experiences that leave people more grounded than when they arrived,
-            with clear planning, steady pacing, and respect for the places we visit.
-          </p>
-        </div>
-      </div>
+        </header>
 
-      {/* Values */}
-      <div className="grid md:grid-cols-3 gap-4 mb-10">
-        {[
-          { icon: <FaHeart className="text-brand.heron" size={22} />, title: "People Centered", desc: "Small groups, welcoming pace, and room to breathe." },
-          { icon: <FaShieldAlt className="text-brand.heron" size={22} />, title: "Safety First", desc: "Gear checks, weather awareness, and clear expectations." },
-          { icon: <FaMapMarkedAlt className="text-brand.heron" size={22} />, title: "Local Focus", desc: "Upper Cumberland (and surrounding areas) lakes, overlooks, and trails we know well." },
-        ].map((v) => (
-          <div key={v.title} className="card">
-            <div className="flex items-center gap-2">
-              {v.icon}
-              <h3 className="font-semibold text-brand.heron">{v.title}</h3>
+        {/* Story & Mission */}
+        <div className="grid md:grid-cols-2 gap-6 mb-10">
+          <div className="card">
+            <h2 className="font-semibold text-brand.heron mb-2">Our Story</h2>
+            <p className="text-sm text-black/70">
+              We started Be Still Crossville to share the quiet side of the Cumberland Plateau —
+              calm-water paddles, beginner-friendly hikes, and nature walks where conversation and
+              observation matter as much as miles. It’s community first, adventure second.
+            </p>
+          </div>
+          <div className="card">
+            <h2 className="font-semibold text-brand.heron mb-2">Our Mission</h2>
+            <p className="text-sm text-black/70">
+              Create accessible outdoor experiences that leave people more grounded than when they arrived,
+              with clear planning, steady pacing, and respect for the places we visit.
+            </p>
+          </div>
+        </div>
+
+        {/* Values */}
+        <div className="grid md:grid-cols-3 gap-4 mb-10">
+          {[
+            { icon: <FaHeart className="text-brand.heron" size={22} />, title: "People Centered", desc: "Small groups, welcoming pace, and room to breathe." },
+            { icon: <FaShieldAlt className="text-brand.heron" size={22} />, title: "Safety First", desc: "Gear checks, weather awareness, and clear expectations." },
+            { icon: <FaMapMarkedAlt className="text-brand.heron" size={22} />, title: "Local Focus", desc: "Upper Cumberland lakes, overlooks, and trails we know well." },
+          ].map((v) => (
+            <div key={v.title} className="card">
+              <div className="flex items-center gap-2">
+                {v.icon}
+                <h3 className="font-semibold text-brand.heron">{v.title}</h3>
+              </div>
+              <p className="text-sm text-black/70 mt-2">{v.desc}</p>
             </div>
-            <p className="text-sm text-black/70 mt-2">{v.desc}</p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      {/* Gallery (from Supabase Storage) */}
-      <div className="mb-10">
-        <h2 className="font-semibold text-brand.heron mb-3">A glimpse of the quiet</h2>
+        {/* Gallery (from Supabase Storage) */}
+        <div className="mb-10">
+          <h2 className="font-semibold text-brand.heron mb-3">A glimpse of the quiet</h2>
 
-        {loadingGallery ? (
-          <div className="w-full rounded-xl border border-dashed border-black/20 bg-black/5 p-6 text-center text-black/50">
-            Loading photos…
-          </div>
-        ) : gallery.length === 0 ? (
-          <div className="w-full rounded-xl border border-dashed border-black/20 bg-black/5 p-6 text-center text-black/50">
-            Add images to <code>Storage → media/about</code> to see them here.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {gallery.map((img, i) => (
-              <button
-                key={img.original}
-                type="button"
-                onClick={() => setLightbox({ open: true, src: img.full })}
-                className="group relative overflow-hidden rounded-xl border border-black/5 focus:outline-none"
-                aria-label={`Open image ${i + 1}`}
-              >
-                <img
-                  src={img.thumb}
-                  srcSet={`${img.thumb} 1x, ${img.thumb2x} 2x`}
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  alt={`Quiet moments on the Plateau — photo ${i + 1}`}
-                  className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                  loading={i < 2 ? "eager" : "lazy"}
-                  decoding="async"
-                  // Helps avoid layout shift before image paints:
-                  style={{ aspectRatio: "16 / 9", backgroundColor: "rgba(0,0,0,0.04)" }}
-                />
-                <span className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
-              </button>
-            ))}
+          {loadingGallery ? (
+            <div className="w-full rounded-xl border border-dashed border-black/20 bg-black/5 p-6 text-center text-black/50">
+              Loading photos…
+            </div>
+          ) : gallery.length === 0 ? (
+            <div className="w-full rounded-xl border border-dashed border-black/20 bg-black/5 p-6 text-center text-black/50">
+              Add images to <code>Storage → media/about</code> to see them here.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {gallery.map((img, i) => (
+                <button
+                  key={img.original}
+                  type="button"
+                  onClick={() => setLightbox({ open: true, src: img.full })}
+                  className="group relative overflow-hidden rounded-xl border border-black/5 focus:outline-none"
+                  aria-label={`Open image ${i + 1}`}
+                >
+                  <img
+                    src={img.thumb}
+                    srcSet={`${img.thumb} 1x, ${img.thumb2x} 2x`}
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    alt={`Quiet moments on the Plateau — photo ${i + 1}`}
+                    className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                    loading={i < 2 ? "eager" : "lazy"}
+                    decoding="async"
+                    style={{ aspectRatio: "16 / 9", backgroundColor: "rgba(0,0,0,0.04)" }}
+                  />
+                  <span className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Lightbox */}
+        {lightbox.open && (
+          <div
+            className="fixed inset-0 z-50 bg-black/70 grid place-items-center p-4"
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setLightbox({ open: false, src: null })}
+          >
+            <img
+              src={lightbox.src ?? ""}
+              alt="Enlarged gallery"
+              className="max-h-[85vh] max-w-[90vw] rounded-xl shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+              decoding="async"
+            />
           </div>
         )}
-      </div>
 
-      {/* Lightbox (simple) */}
-      {lightbox.open && (
-        <div
-          className="fixed inset-0 z-50 bg-black/70 grid place-items-center p-4"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setLightbox({ open: false, src: null })}
-        >
-          <img
-            src={lightbox.src ?? ""}
-            alt="Enlarged gallery"
-            className="max-h-[85vh] max-w-[90vw] rounded-xl shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-            decoding="async"
-          />
+        {/* FAQ */}
+        <section className="py-10">
+          <h2 className="text-xl font-semibold mb-4 text-brand.heron">FAQ</h2>
+          <Accordion items={faqItems} />
+        </section>
+
+        {/* CTA */}
+        <div className="text-center mt-6">
+          <Link to="/tours" className="button-primary">Book a Tour</Link>
+          <p className="text-xs text-black/60 mt-2">Soft launch: Pay What You Want for volunteers.</p>
         </div>
-      )}
-
-      {/* FAQ */}
-      <section className="py-10">
-        <h2 className="text-xl font-semibold mb-4 text-brand.heron">FAQ</h2>
-        <Accordion items={faqItems} />
       </section>
-
-      {/* CTA */}
-      <div className="text-center mt-6">
-        <Link to="/tours" className="button-primary">Book a Tour</Link>
-        <p className="text-xs text-black/60 mt-2">Soft launch: Pay What You Want for volunteers.</p>
-      </div>
-    </section>
+    </>
   );
 }

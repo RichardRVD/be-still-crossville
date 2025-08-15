@@ -4,7 +4,7 @@ import { NavLink, Link, useLocation } from "react-router-dom";
 import Logo from "./Logo";
 
 const link = ({ isActive }) =>
-  "block w-full text-left px-4 py-3 rounded-xl text-base font-medium " + // larger tap targets
+  "block w-full text-left px-4 py-3 rounded-xl text-base font-medium " +
   (isActive
     ? "bg-brand.water/20 text-brand.heron"
     : "text-foreground hover:bg-brand.water/10");
@@ -15,12 +15,10 @@ export default function Navbar() {
   const btnRef = useRef(null);
   const location = useLocation();
 
-  // Close on route change
   useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
 
-  // Close on outside click or Esc
   useEffect(() => {
     if (!menuOpen) return;
 

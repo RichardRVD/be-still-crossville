@@ -60,7 +60,6 @@ export default function Calendar({ events, onSelectDate, selectedDate }) {
               onClick={() => onSelectDate(day)}
               className={
                 "aspect-square rounded-lg p-1 text-sm text-left relative transition " +
-                // Background for days with events (only if not selected)
                 (dayEvents.length > 0 && !isSelected
                   ? "bg-blue-200/40 hover:bg-blue-200/60 "
                   : "") +

@@ -1,34 +1,6 @@
+// src/components/PreloadAboutImages.jsx
 import { useEffect } from "react";
-
-// --- CONFIG — tweak these if your storage layout is different ---
-const BUCKET = "media";         // your Supabase Storage bucket name
-const FOLDER = "about";          // folder inside the bucket ("" if at root)
-const FILES = [
-  "about1.jpeg",
-  "about2.jpeg",
-  "about3.jpeg",
-  "about4.jpeg",
-  "about5.jpeg",
-  "about6.jpeg",
-  "about7.jpeg",
-  "about8.jpeg",
-  "about9.jpeg",
-  "about10.jpeg",
-  "about11.jpeg",
-  "about12.jpeg",
-  "about13.jpeg",
-  "about14.jpeg",
-  "about15.jpeg",
-  "about16.jpeg"
-];
-// ---------------------------------------------------------------
-
-const base = import.meta.env.VITE_SUPABASE_URL?.replace(/\/+$/, "");
-
-function supabasePublicUrl(key) {
-  // key is like "about/about1.jpeg" or "about1.jpeg"
-  return `${base}/storage/v1/object/public/${BUCKET}/${key}`;
-}
+import { listAboutGallery } from "../services/storage"; // already used by About page
 
 function preload(urls) {
   urls.forEach((url) => {
@@ -41,19 +13,22 @@ function preload(urls) {
 
 export default function PreloadAboutImages() {
   useEffect(() => {
-    // Don’t compete with initial paint; also skip very slow connections
-    const run = () => {
+    let cancelled = false;
+
+    const run = async () => {
       const net = navigator.connection?.effectiveType || "";
       if (net.includes("2g")) return;
 
-      const keys = FILES.map((name) =>
-        FOLDER ? `${FOLDER}/${name}` : name
-      );
-      const urls = keys.map(supabasePublicUrl);
-      preload(urls);
-    };
+      try {
+        const items = await listAboutGallery();
+        if (cancelled) return;
 
-    if (!base) return; // safety: missing env
+        const urls = items.map((i) => i.full || i.thumb);
+        preload(urls);
+      } catch (e) {
+        console.warn("PreloadAboutImages failed:", e);
+      }
+    };
 
     if ("requestIdleCallback" in window) {
       requestIdleCallback(run, { timeout: 2000 });
@@ -61,14 +36,15 @@ export default function PreloadAboutImages() {
       setTimeout(run, 600);
     }
 
-    // Prefetch again on About hover/click (helps on fast nav)
-    const navLink = document.querySelector('a[href="/about"]');
+    const aboutLink = document.querySelector('a[href="/about"]');
     const onHover = () => run();
-    navLink?.addEventListener("mouseenter", onHover);
-    navLink?.addEventListener("focus", onHover);
+    aboutLink?.addEventListener("mouseenter", onHover);
+    aboutLink?.addEventListener("focus", onHover);
+
     return () => {
-      navLink?.removeEventListener("mouseenter", onHover);
-      navLink?.removeEventListener("focus", onHover);
+      cancelled = true;
+      aboutLink?.removeEventListener("mouseenter", onHover);
+      aboutLink?.removeEventListener("focus", onHover);
     };
   }, []);
 

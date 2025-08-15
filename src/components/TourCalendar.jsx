@@ -11,22 +11,18 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-/** ----- Central Time helpers (no extra libs) ----- */
 const CT_TZ = "America/Chicago";
 
-/** Robust parse: accepts Date, ISO, or "YYYY-MM-DD HH:mm:ss±HH" */
 function parseDateSafe(v) {
   if (!v) return new Date(NaN);
   if (v instanceof Date) return v;
   if (typeof v === "string") {
-    // Normalize "YYYY-MM-DD HH:mm:ss-05" -> "YYYY-MM-DDTHH:mm:ss-05"
     const s = v.includes("T") ? v : v.replace(" ", "T");
     return new Date(s);
   }
   return new Date(v);
 }
 
-// Format an instant as "YYYY-MM-DD" in America/Chicago
 function ymdInCT(isoLike) {
   const d = parseDateSafe(isoLike);
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -76,7 +72,6 @@ export default function TourCalendar({ onUseEvent }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch public events for visible month ±1 month
   useEffect(() => {
     const from = startOfMonth(subMonths(month, 1));
     const to = endOfMonth(addMonths(month, 1));
@@ -100,7 +95,6 @@ export default function TourCalendar({ onUseEvent }) {
     };
   }, [month]);
 
-  // Group by Central Time calendar day
   const eventsByCTDay = useMemo(() => {
     const map = new Map();
     for (const ev of events) {
@@ -115,7 +109,6 @@ export default function TourCalendar({ onUseEvent }) {
     return map;
   }, [events]);
 
-  // Build a fixed 6x7 grid
   const grid = useMemo(() => {
     const mStart = startOfMonth(month);
     const first = startOfWeek(mStart, { weekStartsOn: 0 });
@@ -127,11 +120,9 @@ export default function TourCalendar({ onUseEvent }) {
     return cells;
   }, [month]);
 
-  // Sidebar list for the selected day (keyed in CT as well)
   const selectedCTKey = ymdInCT(selected.toISOString());
   const selectedList = eventsByCTDay.get(selectedCTKey) || [];
 
-  // Does this cell have any events (in CT)?
   function cellHasEvent(d) {
     const key = ymdInCT(d.toISOString());
     return eventsByCTDay.has(key);
@@ -181,7 +172,6 @@ export default function TourCalendar({ onUseEvent }) {
 
             const base =
               "aspect-square rounded-xl text-sm transition relative overflow-hidden";
-            // Use stock Tailwind colors + ring so it's unmistakable
             const bg =
               isSel
                 ? "bg-brand-heron text-white"

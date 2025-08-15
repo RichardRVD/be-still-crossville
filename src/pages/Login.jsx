@@ -14,7 +14,6 @@ export default function Login() {
   const location = useLocation();
   const redirectTo = location.state?.from?.pathname || "/admin";
 
-  // If already signed in, bounce to admin
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate(redirectTo, { replace: true });
@@ -28,7 +27,7 @@ export default function Login() {
     setErr("");
     try {
       const redirectToURL =
-        window.location.origin + "/login"; // the page user returns to after magic link
+        window.location.origin + "/login";
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: { emailRedirectTo: redirectToURL },
