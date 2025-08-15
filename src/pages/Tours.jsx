@@ -1,15 +1,30 @@
 // src/pages/Tours.jsx
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { useForm } from "../hooks/useForm";
 import { submitVolunteerForm } from "../services/forms";
 import TourCalendar from "../components/TourCalendar";
-import Seo from "../components/Seo";
+import { listPublicEvents } from "../services/events";
 
 export default function Tours() {
   const { status, error, handleSubmit } = useForm(submitVolunteerForm);
   const [selectedTour, setSelectedTour] = useState("Sunset Kayak – Meadow Park Lake");
   const [filter, setFilter] = useState("All");
   const formRef = useRef(null);
+  const [events, setEvents] = useState([]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await listPublicEvents();
+        if (!cancelled) setEvents(rows || []);
+      } catch (e) {
+        console.warn("Failed to load events for JSON-LD:", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+  // -------------------------------------------------------------------
 
   const TOURS = useMemo(
     () => [
@@ -25,6 +40,7 @@ export default function Tours() {
     ],
     []
   );
+
   const FILTERS = ["All", "Kayak", "Hike", "Walk", "Seasonal"];
   const visibleTours = useMemo(
     () => (filter === "All" ? TOURS : TOURS.filter((t) => t.category === filter)),
@@ -38,17 +54,14 @@ export default function Tours() {
     );
   }
 
-  // Called by TourCalendar when a date is clicked
   function handleUseEvent(evOrDate) {
     let dateLabel = "";
 
     if (evOrDate?.start_at) {
-      // Clicked an event day
       const tourTitle = evOrDate.tour || evOrDate.title || selectedTour;
       dateLabel = formatDateRange(evOrDate.start_at, evOrDate.end_at);
       setSelectedTour(tourTitle);
     } else if (evOrDate instanceof Date) {
-      // Clicked a day without events
       dateLabel = evOrDate.toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
@@ -66,13 +79,78 @@ export default function Tours() {
 
   return (
     <section className="max-w-6xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-semibold text-brand.heron mb-6">Tours &amp; Sign Up</h1>
+      <Helmet>
+        <title>Tours — Be Still Crossville</title>
+        <meta
+          name="description"
+          content="Kayak, hike, and nature walks across the Upper Cumberland. Pick a date from the calendar or send us one that works for you."
+        />
+        <link rel="canonical" href="https://stillcrossville.com/tours" />
 
-      <Seo
-        title="Tours — Be Still Crossville"
-        description="Kayak, hike, and nature walks across the Upper Cumberland. Pick a date or send us one that works for you."
-        url="https://stillcrossville.com/tours"
-      />
+        {/* Social preview */}
+        <meta property="og:title" content="Tours — Be Still Crossville" />
+        <meta
+          property="og:description"
+          content="Kayak, hike, and nature walks across the Upper Cumberland. Pick a date from the calendar or send us one that works for you."
+        />
+        <meta property="og:image" content="https://stillcrossville.com/og.jpg" />
+        <meta property="og:url" content="https://stillcrossville.com/tours" />
+        <meta property="og:type" content="website" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Tours — Be Still Crossville" />
+        <meta
+          name="twitter:description"
+          content="Kayak, hike, and nature walks across the Upper Cumberland. Pick a date from the calendar or send us one that works for you."
+        />
+        <meta name="twitter:image" content="https://stillcrossville.com/og.jpg" />
+      </Helmet>
+
+      {/* JSON-LD for the list + individual events (safe even if empty) */}
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            "itemListElement": (events || []).map((ev, i) => ({
+              "@type": "ListItem",
+              "position": i + 1,
+              "url": "https://stillcrossville.com/tours"
+            }))
+          })}
+        </script>
+
+        {(events || []).map((ev) => (
+          <script key={ev.id} type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Event",
+              "name": ev.title || ev.tour || "Tour",
+              "startDate": ev.start_at,
+              "endDate": ev.end_at || undefined,
+              "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+              "eventStatus": "https://schema.org/EventScheduled",
+              "location": {
+                "@type": "Place",
+                "name": ev.location || "Crossville, TN",
+                "address": {
+                  "@type": "PostalAddress",
+                  "addressLocality": "Crossville",
+                  "addressRegion": "TN",
+                  "addressCountry": "US"
+                }
+              },
+              "organizer": {
+                "@type": "Organization",
+                "name": "Be Still Crossville",
+                "url": "https://stillcrossville.com/"
+              }
+            })}
+          </script>
+        ))}
+      </Helmet>
+
+      <h1 className="text-3xl font-semibold text-brand.heron mb-6">Tours &amp; Sign Up</h1>
 
       <div className="grid md:grid-cols-2 gap-8">
         {/* Left: Calendar + list */}
@@ -84,7 +162,7 @@ export default function Tours() {
 
           {/* Filters */}
           <div className="flex flex-wrap gap-2">
-            {FILTERS.map((f) => {
+            {["All", "Kayak", "Hike", "Walk", "Seasonal"].map((f) => {
               const active = f === filter;
               return (
                 <button
@@ -106,7 +184,7 @@ export default function Tours() {
 
           {/* Tour cards */}
           <div className="space-y-3">
-            {visibleTours.map((t) => {
+            {TOURS.filter((t) => filter === "All" || t.category === filter).map((t) => {
               const active = selectedTour === t.title;
               return (
                 <div
@@ -158,6 +236,7 @@ export default function Tours() {
             Soft launch: help us refine these experiences. You choose the amount.
           </p>
 
+          {/* Honeypot */}
           <input type="text" name="_gotcha" style={{ display: "none" }} tabIndex="-1" autoComplete="off" />
 
           <label className="block">

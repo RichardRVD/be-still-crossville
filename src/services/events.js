@@ -1,13 +1,9 @@
 // src/services/events.js
 import { supabase } from "./supabase";
 
-// We keep CT handling in the UI; the DB stores UTC.
-// This module only normalizes inputs and returns raw rows.
-
 function toISO(d) {
   if (!d) return null;
   if (d instanceof Date) return d.toISOString();
-  // If it's already ISO-like, trust it; otherwise coerce via Date.
   return new Date(d).toISOString();
 }
 function dayAfter(dateLike) {
@@ -17,7 +13,6 @@ function dayAfter(dateLike) {
   return d.toISOString();
 }
 
-// Minimal slugifier for tour_key
 function slugify(input) {
   return (input || "")
     .toString()
@@ -28,7 +23,6 @@ function slugify(input) {
     .replace(/^-|-$/g, "") || "general";
 }
 
-/** Public events between optional from/to (inclusive days). */
 export async function listPublicEvents({ from, to } = {}) {
   let q = supabase
     .from("events")
@@ -36,7 +30,6 @@ export async function listPublicEvents({ from, to } = {}) {
     .eq("is_public", true)
     .order("start_at", { ascending: true });
 
-  // Use a half-open range [from, dayAfter(to)) to avoid off-by-one with timezones.
   if (from) q = q.gte("start_at", toISO(from));
   if (to)   q = q.lt("start_at", dayAfter(to));
 
@@ -45,13 +38,11 @@ export async function listPublicEvents({ from, to } = {}) {
   return data || [];
 }
 
-/** Upsert an event. Accepts { start_at, end_at } as Date|string (UTC or ISO). */
 export async function upsertEvent(ev) {
   const patch = { ...ev };
   if (patch.start_at) patch.start_at = toISO(patch.start_at);
   if (patch.end_at)   patch.end_at   = toISO(patch.end_at);
 
-  // ✅ Ensure tour_key to satisfy NOT NULL constraint
   if (!patch.tour_key) {
     const basis = patch.tour || patch.title || "general";
     patch.tour_key = slugify(basis);
@@ -72,5 +63,4 @@ export async function deleteEvent(id) {
   if (error) throw new Error(error.message);
 }
 
-/* Alias used by Admin.jsx */
 export const listEvents = listPublicEvents;

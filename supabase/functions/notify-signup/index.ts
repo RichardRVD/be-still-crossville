@@ -1,7 +1,4 @@
 // supabase/functions/notify-signup/index.ts
-// Sends admin email (From: “Be Still Crossville — Booking <booking@…>”)
-// and an acknowledgement to the user.
-
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
 const ALLOW_ORIGIN = "*";

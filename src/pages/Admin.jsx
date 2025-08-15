@@ -8,8 +8,6 @@ import {
 } from "../services/events";
 
 // ----------------------------- Timezone helpers (America/Chicago) -----------------------------
-// Convert a `datetime-local` string (e.g. "2025-08-22T19:00") which is a *wall time in Central*
-// into a UTC ISO string for storage in timestamptz.
 const CHICAGO_TZ = "America/Chicago";
 
 /** Returns the offset (in minutes) of `date` for a given IANA time zone. */
@@ -34,7 +32,6 @@ function getZoneOffsetMinutes(date, timeZone) {
     Number(map.minute),
     Number(map.second)
   );
-  // difference (ms) between "what this instant looks like in tz" and the actual UTC instant
   return (asUTC - date.getTime()) / 60000;
 }
 
@@ -72,11 +69,8 @@ function formatCentral(iso, opts = {}) {
   }).format(d);
 }
 
-// ----------------------------------------------------------------------------------------------
-
 const STATUS_OPTIONS = ["new", "contacted", "scheduled", "completed", "cancelled"];
 
-// tiny helpers for safe link creation
 const enc = encodeURIComponent;
 function buildMailto(row) {
   const subj = `Be Still Crossville — re: ${row.tour || "your request"}`;
@@ -98,7 +92,6 @@ function buildSms(row) {
   return `sms:${row.phone}?&body=${enc(msg)}`;
 }
 
-// Simple input helpers
 function Input({ label, ...props }) {
   return (
     <label className="block">
@@ -494,7 +487,7 @@ function EventsPanel() {
       hour12: false,
     })
       .format(d)
-      .replace(", ", "T"); // "YYYY-MM-DD, HH:mm" -> "YYYY-MM-DDTHH:mm"
+      .replace(", ", "T");
     return parts.slice(0, 16);
   }
 
@@ -510,7 +503,6 @@ function EventsPanel() {
         capacity: Number(form.capacity) || null,
       };
       const saved = await upsertEvent(payload);
-      // merge/refresh
       if (editing === "new") {
         setEvents((prev) => [saved, ...prev]);
       } else {

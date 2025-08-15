@@ -1,10 +1,7 @@
 // supabase/functions/contact/index.ts
-// Sends admin email (From: “Be Still Crossville — Contact <contact@…>”)
-// and an acknowledgement to the user.
-
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
-const ALLOW_ORIGIN = "*"; // or "https://stillcrossville.com"
+const ALLOW_ORIGIN = "*";
 const ALLOW_HEADERS = "authorization, content-type";
 
 function withCors(res: Response) {
@@ -28,8 +25,8 @@ type EmailPayload = {
 };
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
-const TO_ADMIN       = Deno.env.get("CONTACT_TO_EMAIL")!;                // bestillcrossville@gmail.com
-const FROM_CONTACT   = Deno.env.get("CONTACT_FROM_EMAIL_CONTACT")!;      // 'Be Still Crossville — Contact <contact@stillcrossville.com>'
+const TO_ADMIN       = Deno.env.get("CONTACT_TO_EMAIL")!;
+const FROM_CONTACT   = Deno.env.get("CONTACT_FROM_EMAIL_CONTACT")!;
 
 async function sendViaResend(body: Record<string, unknown>) {
   const resp = await fetch("https://api.resend.com/emails", {

@@ -40,7 +40,6 @@ export default function Accordion({ items = [], singleExpand = true }) {
                 (open ? "text-brand.heron" : "text-foreground")
               }
             >
-              {/* Keep the question visible at all times */}
               <span className="font-medium">{item.q}</span>
               <span
                 className={
