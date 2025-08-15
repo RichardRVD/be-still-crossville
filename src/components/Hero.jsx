@@ -46,7 +46,8 @@ export default function Hero() {
           Be Still Crossville
         </h1>
         <p className="max-w-xl mb-6">
-          Guided kayaking & hiking experiences in the heart of the Cumberland Plateau.
+          Guided Kayaking & Hiking Tours, Camping, and
+                    Community Events in Cumberland County, TN
         </p>
         <Link to="/tours" className="button-primary">Book a Tour</Link>
       </div>
