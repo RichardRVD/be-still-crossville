@@ -14,6 +14,8 @@ import {
   FaSwimmer,
 } from "react-icons/fa";
 import { MdSurfing } from "react-icons/md";
+import PayLinkButton from "../components/PayLinkButton";
+
 
 export default function Home() {
   return (
@@ -188,12 +190,13 @@ export default function Home() {
 
           {/* CTA */}
           <div className="text-center mt-8">
-            <Link to="/tours" className="button-primary inline-block">
-              View Tours
-            </Link>
-            <p className="text-xs text-black/60 mt-2">
-              Soft launch: Pay What You Want for volunteers.
-            </p>
+            <div className="text-center mt-8 space-x-2">
+              <Link to="/tours" className="button-primary inline-block">View Tours</Link>
+              <PayLinkButton>Pay What You Want</PayLinkButton>
+              <p className="text-xs text-black/60 mt-2">
+                Soft launch: Pay What You Want for volunteers.
+              </p>
+            </div>
           </div>
         </div>
       </section>
