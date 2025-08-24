@@ -11,31 +11,32 @@ import {
   FaShieldAlt,
   FaHandshake,
   FaCampground,
-  FaCamera,
+  FaSwimmer,
 } from "react-icons/fa";
+import { MdSurfing } from "react-icons/md";
 
 export default function Home() {
   return (
     <>
       <Helmet>
         <title>
-          Be Still Crossville — Guided Kayaking & Hiking Tours, Camping, and
-          Community Events in Cumberland County, TN
+          Be Still Crossville — Guided Kayaking, Paddleboarding, Hiking, Camping,
+          and Community Events in Cumberland County, TN
         </title>
         <meta
           name="description"
-          content="Your local gateway to quiet, affordable outdoor time in Crossville, TN — calm-water kayaking, beginner-friendly hikes, nature walks, camping/overnights, photo meetups, and community cleanups. Peaceful, small-group outings; pay-what-you-want during our soft launch."
+          content="Your local gateway to quiet, affordable outdoor time in Crossville, TN — calm-water kayaking, paddleboarding, beginner-friendly hikes, nature walks, camping/overnights, and community cleanups. Peaceful, small-group outings; pay-what-you-want during our soft launch."
         />
         <link rel="canonical" href="https://stillcrossville.com/" />
 
         {/* Social preview */}
         <meta
           property="og:title"
-          content="Be Still Crossville — Kayaking, Hiking, Camping & Community"
+          content="Be Still Crossville — Kayaking, Paddleboarding, Hiking, Camping & Community"
         />
         <meta
           property="og:description"
-          content="Quiet, small-group adventures around Cumberland County, TN: kayak tours, hikes, nature walks, camping, photo meetups, and cleanups."
+          content="Quiet, small-group adventures around Cumberland County, TN: kayak tours, paddleboarding, hikes, nature walks, camping, and cleanups."
         />
         <meta property="og:image" content="https://stillcrossville.com/og.jpg" />
         <meta property="og:url" content="https://stillcrossville.com/" />
@@ -44,11 +45,11 @@ export default function Home() {
         <meta name="twitter:card" content="summary_large_image" />
         <meta
           name="twitter:title"
-          content="Be Still Crossville — Kayaking, Hiking, Camping & Community"
+          content="Be Still Crossville — Kayaking, Paddleboarding, Hiking, Camping & Community"
         />
         <meta
           name="twitter:description"
-          content="Quiet, small-group adventures around Cumberland County, TN: kayak tours, hikes, nature walks, camping, photo meetups, and cleanups."
+          content="Quiet, small-group adventures around Cumberland County, TN: kayak tours, paddleboarding, hikes, nature walks, camping, and cleanups."
         />
         <meta name="twitter:image" content="https://stillcrossville.com/og.jpg" />
       </Helmet>
@@ -118,6 +119,11 @@ export default function Home() {
               icon: <FaWater className="text-brand.heron/90" size={20} />,
             },
             {
+              title: "Paddleboarding",
+              desc: "Stable boards on mellow water. Great for first-timers — quick lesson included.",
+              icon: <MdSurfing className="text-brand.heron/90" size={20} />,
+            },
+            {
               title: "Nature Walks",
               desc: "Slow, mindful strolls with time for birds, plants, and quiet moments.",
               icon: <FaLeaf className="text-brand.heron/90" size={20} />,
@@ -126,11 +132,6 @@ export default function Home() {
               title: "Camping & Overnights",
               desc: "Simple campouts and intro camping skills for relaxed nights outside.",
               icon: <FaCampground className="text-brand.heron/90" size={20} />,
-            },
-            {
-              title: "Photo Meetups",
-              desc: "Golden-hour gatherings and waterfall stops for easy, scenic shots.",
-              icon: <FaCamera className="text-brand.heron/90" size={20} />,
             },
             {
               title: "Community & Cleanups",
