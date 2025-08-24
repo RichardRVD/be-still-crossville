@@ -2,6 +2,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import Logo from "./Logo";
+import PayLinkButton from "./PayLinkButton";
+
 
 const link = ({ isActive }) =>
   "block w-full text-left px-4 py-3 rounded-xl text-base font-medium " +
@@ -68,6 +70,9 @@ export default function Navbar() {
           <NavLink to="/contact" className={link}>
             Contact
           </NavLink>
+          <PayLinkButton className="hidden sm:inline-flex" ariaLabel="Open payment link">
+              Pay
+          </PayLinkButton>
         </nav>
 
         {/* Mobile Menu Button */}
@@ -116,6 +121,9 @@ export default function Navbar() {
           <NavLink to="/contact" className={link}>
             Contact
           </NavLink>
+          <div className="mt-2">
+                <PayLinkButton className="w-full justify-center" />
+              </div>
         </nav>
       </div>
     </header>
