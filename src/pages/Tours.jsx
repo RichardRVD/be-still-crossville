@@ -18,15 +18,14 @@ export default function Tours() {
       { title: "Black Mountain Overlook Hike",    desc: "Scenic hills, light elevation, photo-friendly spots.", category: "Hike", tags: ["Scenic","Easy","Photos"] },
       { title: "Ozone Falls Hike",                desc: "Short trail to a dramatic waterfall; shaded and easy.", category: "Hike", tags: ["Waterfall","Easy","Shade"] },
       { title: "Lily Bluff Trail – Obed River",   desc: "Moderate hike with fantastic river overlooks.", category: "Hike", tags: ["Moderate","River Views","Scenic"] },
-      { title: "Soldier’s Beach Nature Walk",     desc: "Gentle shoreline walk with plant & wildlife notes.", category: "Walk", tags: ["Easy","Shoreline","Nature"] },
-      { title: "Birdwatching – Cumberland Mtn SP",desc: "Easy loop focused on spotting local birds.", category: "Walk", tags: ["Easy","Wildlife","Family"] },
+      { title: "Soldier’s Beach Hike",     desc: "Gentle shoreline walk with plant & wildlife notes.", category: "Hike", tags: ["Easy","Shoreline","Nature"] },
       { title: "Fall Colors Hike (Seasonal)",     desc: "Peak color walk; leisurely pace for photos.", category: "Seasonal", tags: ["Scenic","Photos","Easy"] },
       { title: "Winter Stillness Walk (Seasonal)",desc: "Quiet, mindful nature walk when trails are calm.", category: "Seasonal", tags: ["Mindful","Easy","Quiet"] },
     ],
     []
   );
 
-  const FILTERS = ["All", "Kayak", "Hike", "Walk", "Seasonal"];
+  const FILTERS = ["All", "Kayak", "Hike", "Backpacking", "Seasonal"];
 
   const visibleTours = useMemo(
     () => (filter === "All" ? TOURS : TOURS.filter((t) => t.category === filter)),
@@ -77,7 +76,7 @@ export default function Tours() {
         <title>Tours — Be Still Crossville</title>
         <meta
           name="description"
-          content="Kayak, hike, and nature walks across the Upper Cumberland. Pick a date from the calendar or send us one that works for you."
+          content="Kayaking, hiking, camping, backpacking across the Upper Cumberland. Pick a date from the calendar for our scheduled events or fill out the form if you have a special request. If we can accommodate, we will let you know."
         />
         <link rel="canonical" href="https://stillcrossville.com/tours" />
       </Helmet>
@@ -164,7 +163,7 @@ export default function Tours() {
         {/* Right: form */}
         <form ref={formRef} onSubmit={handleSubmit} className="card space-y-3">
           <p className="text-sm text-black/70">
-            Soft launch: help us refine these experiences. You choose the amount.
+            Pick a date from the calendar for our scheduled events or fill out the form if you have a special request. If we can accommodate, we will let you know.
           </p>
 
           {/* Honeypot */}
@@ -222,7 +221,7 @@ export default function Tours() {
           </label>
 
           <div className="text-xs text-black/60">
-            Payment options shared after sign-up (Stripe link, Venmo, or cash in person). PWYW for volunteers.
+            Payment options shared after sign-up (Via Stripe link online, or Venmo/cash in person).
           </div>
 
           <button className="button-primary" type="submit" disabled={status === "submitting"}>
