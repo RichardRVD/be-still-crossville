@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import Logo from "./Logo";
 import PayLinkButton from "./PayLinkButton";
-
+import { supabase } from "../services/supabase";
 
 const link = ({ isActive }) =>
   "block w-full text-left px-4 py-3 rounded-xl text-base font-medium " +
@@ -13,14 +13,32 @@ const link = ({ isActive }) =>
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isAuthed, setIsAuthed] = useState(false);
   const menuRef = useRef(null);
   const btnRef = useRef(null);
   const location = useLocation();
 
+  // Close menu on route change
   useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
 
+  // Auth state: show Admin when signed in
+  useEffect(() => {
+    let unsub;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthed(!!data?.session);
+
+      const listener = supabase.auth.onAuthStateChange((_evt, session) => {
+        setIsAuthed(!!session);
+      });
+      unsub = () => listener.data.subscription.unsubscribe();
+    })();
+    return () => unsub && unsub();
+  }, []);
+
+  // Click outside / Esc closes mobile menu
   useEffect(() => {
     if (!menuOpen) return;
 
@@ -70,8 +88,16 @@ export default function Navbar() {
           <NavLink to="/contact" className={link}>
             Contact
           </NavLink>
+
+          {/* Admin link only when authed */}
+          {isAuthed && (
+            <NavLink to="/admin" className={link}>
+              Admin
+            </NavLink>
+          )}
+
           <PayLinkButton className="hidden sm:inline-flex" ariaLabel="Open payment link">
-              Pay
+            Pay
           </PayLinkButton>
         </nav>
 
@@ -105,7 +131,7 @@ export default function Navbar() {
         ref={menuRef}
         className={
           "md:hidden overflow-hidden transition-[max-height,opacity] duration-300 ease-out " +
-          (menuOpen ? "opacity-100 max-h-[320px]" : "opacity-0 max-h-0")
+          (menuOpen ? "opacity-100 max-h-[360px]" : "opacity-0 max-h-0")
         }
       >
         <nav className="px-2 pb-3">
@@ -121,9 +147,17 @@ export default function Navbar() {
           <NavLink to="/contact" className={link}>
             Contact
           </NavLink>
-          <div className="mt-2">
-                <PayLinkButton className="w-full justify-center" />
-              </div>
+
+          {/* Admin (mobile) only when authed */}
+          {isAuthed && (
+            <NavLink to="/admin" className={link}>
+              Admin
+            </NavLink>
+          )}
+
+          <PayLinkButton className="w-full sm:hidden justify-center">
+            Pay
+          </PayLinkButton>
         </nav>
       </div>
     </header>

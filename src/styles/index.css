@@ -24,31 +24,15 @@
   @apply rounded-2xl border border-black/5 bg-white shadow-soft p-4;
 }
 
-/* Calendar event day shading */
 .react-calendar__tile--hasEvent {
-  @apply bg-blue-200/40 rounded-md; /* soft transparent blue w/ rounded edges */
+  @apply bg-blue-200/40 rounded-md;
 }
 
 .react-calendar__tile--hasEvent:hover {
-  @apply bg-blue-200/60; /* slightly darker hover */
+  @apply bg-blue-200/60;
 }
-
-/*body {
-  font-family: 'Montserrat', sans-serif;
-}*/
-
-/*body {
-  font-family: 'Raleway', sans-serif;
-}*/
-
-/*body {
-  font-family: 'Lora', serif;
-}*/
-
-/*body {
-  font-family: 'Cabin', sans-serif;
-}*/
 
 body {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cabin', sans-serif;
 }
+
