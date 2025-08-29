@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "../services/supabase";
 import {
-  listEvents,        // ✅ lowercase
+  listEvents,
   upsertEvent,
   deleteEvent as deleteEventRow,
 } from "../services/events";
@@ -38,18 +38,11 @@ function getZoneOffsetMinutes(date, timeZone) {
 /** Given "YYYY-MM-DDTHH:mm" wall-time in Central, return UTC ISO string. */
 function chicagoLocalInputToUTCISO(localStr) {
   if (!localStr) return null;
-  // Parse naive local-wall time components
   const [datePart, timePart] = localStr.split("T");
   const [y, m, d] = datePart.split("-").map((n) => Number(n));
   const [hh, mm] = (timePart || "00:00").split(":").map((n) => Number(n));
-
-  // Create a UTC date from those components (pretend it's UTC first)
   const pretendUTC = new Date(Date.UTC(y, m - 1, d, hh, mm, 0));
-
-  // Find the offset for that instant *in Central* (accounts for DST automatically)
   const offsetMin = getZoneOffsetMinutes(pretendUTC, CHICAGO_TZ);
-
-  // Real UTC instant = pretendUTC - offset
   const realUTCms = pretendUTC.getTime() - offsetMin * 60 * 1000;
   return new Date(realUTCms).toISOString();
 }
@@ -126,7 +119,7 @@ function Checkbox({ label, checked, onChange }) {
 
 // ----------------------------- Admin Page -----------------------------
 export default function Admin() {
-  const [tab, setTab] = useState("signups"); // "signups" | "events"
+  const [tab, setTab] = useState("signups"); // "signups" | "events" | "tours"
 
   return (
     <section className="max-w-7xl mx-auto px-4 py-10">
@@ -155,10 +148,21 @@ export default function Admin() {
           >
             Events
           </button>
+          <button
+            onClick={() => setTab("tours")}
+            className={
+              "px-3 py-1.5 rounded-lg border " +
+              (tab === "tours"
+                ? "border-brand.heron bg-brand.water/20 text-brand.heron"
+                : "border-black/10 hover:bg-black/5")
+            }
+          >
+            Tours
+          </button>
         </div>
       </div>
 
-      {tab === "signups" ? <SignupsPanel /> : <EventsPanel />}
+      {tab === "signups" ? <SignupsPanel /> : tab === "events" ? <EventsPanel /> : <ToursPanel />}
     </section>
   );
 }
@@ -459,10 +463,7 @@ function EventsPanel() {
       title: ev.title || "",
       tour: ev.tour || "",
       location: ev.location || "",
-      // Convert stored UTC to 'YYYY-MM-DDTHH:mm' shown as Central
-      start_at: ev.start_at
-        ? centralISOToLocalInput(ev.start_at)
-        : "",
+      start_at: ev.start_at ? centralISOToLocalInput(ev.start_at) : "",
       end_at: ev.end_at ? centralISOToLocalInput(ev.end_at) : "",
       capacity: ev.capacity ?? 8,
       is_public: !!ev.is_public,
@@ -474,7 +475,6 @@ function EventsPanel() {
     setForm(emptyEvent);
   }
 
-  // Convert UTC ISO to 'YYYY-MM-DDTHH:mm' as Central for the input control
   function centralISOToLocalInput(iso) {
     const d = new Date(iso);
     const parts = new Intl.DateTimeFormat("en-CA", {
@@ -497,7 +497,6 @@ function EventsPanel() {
     try {
       const payload = {
         ...form,
-        // IMPORTANT: interpret inputs as CENTRAL and convert to UTC ISO
         start_at: form.start_at ? chicagoLocalInputToUTCISO(form.start_at) : null,
         end_at: form.end_at ? chicagoLocalInputToUTCISO(form.end_at) : null,
         capacity: Number(form.capacity) || null,
@@ -661,6 +660,232 @@ function EventsPanel() {
                 {saving ? "Saving…" : "Save event"}
               </button>
               <button className="px-4 py-2 rounded-lg border border-black/10 hover:bg-black/5" onClick={cancelEdit}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ----------------------------- TOURS PANEL (catalog) -----------------------------
+const TOUR_CATEGORIES = [
+  "Kayak",
+  "Paddle Board",
+  "Hike",
+  "Walk",
+  "Camping",
+  "Backpacking",
+  "Seasonal",
+  "Other",
+];
+
+function ToursPanel() {
+  const empty = {
+    id: undefined,
+    title: "",
+    description: "",
+    category: "Hike",
+    tags: "",
+    is_public: true,
+    sort_order: 100,
+  };
+
+  const [tours, setTours] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(null); // id or 'new'
+  const [form, setForm] = useState(empty);
+  const [err, setErr] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function refresh() {
+    setLoading(true);
+    setErr("");
+    const { data, error } = await supabase
+      .from("tours")
+      .select("id,title,description,category,tags,is_public,sort_order,created_at")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
+    if (error) setErr(error.message);
+    setTours(data || []);
+    setLoading(false);
+  }
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  function startNew() {
+    setEditing("new");
+    setForm({ ...empty });
+  }
+  function startEdit(row) {
+    setEditing(row.id);
+    setForm({
+      id: row.id,
+      title: row.title || "",
+      description: row.description || "",
+      category: row.category || "Hike",
+      tags: (row.tags || []).join(", "),
+      is_public: !!row.is_public,
+      sort_order: row.sort_order ?? 100,
+    });
+  }
+  function cancel() {
+    setEditing(null);
+    setForm(empty);
+  }
+
+  async function save() {
+    setSaving(true);
+    setErr("");
+    try {
+      const payload = {
+        id: form.id || undefined,
+        title: form.title.trim(),
+        description: form.description.trim(),
+        category: form.category,
+        is_public: !!form.is_public,
+        sort_order: Number(form.sort_order) || 100,
+        tags: form.tags.split(",").map((s) => s.trim()).filter(Boolean),
+      };
+      const { data, error } = await supabase.from("tours").upsert(payload).select().single();
+      if (error) throw new Error(error.message);
+      if (editing === "new") {
+        setTours((prev) => [data, ...prev]);
+      } else {
+        setTours((prev) => prev.map((t) => (t.id === data.id ? data : t)));
+      }
+      cancel();
+    } catch (e) {
+      setErr(e.message || "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function remove(id) {
+    if (!confirm("Delete this tour?")) return;
+    setErr("");
+    const { error } = await supabase.from("tours").delete().eq("id", id);
+    if (error) setErr(error.message);
+    setTours((prev) => prev.filter((t) => t.id !== id));
+    if (editing && editing !== "new" && editing === id) cancel();
+  }
+
+  return (
+    <div className="grid md:grid-cols-2 gap-8">
+      {/* Left: list */}
+      <div>
+        <div className="mb-3 flex items-center gap-2">
+          <button className="px-3 py-2 rounded-lg border border-black/10 hover:bg-black/5" onClick={refresh}>
+            Refresh
+          </button>
+          <button className="px-3 py-2 rounded-lg border border-black/10 hover:bg-black/5" onClick={startNew}>
+            + New tour
+          </button>
+        </div>
+        {err && <p className="text-sm text-red-600 mb-2">{err}</p>}
+        {loading ? (
+          <p className="text-sm text-black/60">Loading…</p>
+        ) : tours.length === 0 ? (
+          <p className="text-sm text-black/60">No tours yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {tours.map((t) => (
+              <div key={t.id} className="rounded-xl border border-black/10 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-brand.heron truncate">{t.title}</div>
+                    <div className="text-xs text-black/60">
+                      {t.category} • {(t.tags || []).join(" • ")} {t.is_public ? "• public" : "• private"}
+                      {typeof t.sort_order === "number" ? ` • sort ${t.sort_order}` : ""}
+                    </div>
+                    {t.description && <p className="text-sm text-black/70 mt-1">{t.description}</p>}
+                  </div>
+                  <div className="shrink-0 flex items-center gap-2">
+                    <button className="px-3 py-1.5 rounded-lg border hover:bg-black/5" onClick={() => startEdit(t)}>
+                      Edit
+                    </button>
+                    <button className="px-3 py-1.5 rounded-lg border hover:bg-black/5" onClick={() => remove(t.id)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Right: editor */}
+      <div className="card">
+        <h2 className="font-semibold text-brand.heron mb-3">
+          {editing ? (editing === "new" ? "New tour" : "Edit tour") : "Tour editor"}
+        </h2>
+
+        {!editing ? (
+          <p className="text-sm text-black/60">Choose a tour to edit, or click “New tour”.</p>
+        ) : (
+          <div className="space-y-3">
+            <Input
+              label="Title"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              placeholder="e.g., Sunset Kayak – Meadow Park Lake"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-xs text-black/60">Category</span>
+                <select
+                  className="mt-1 w-full rounded-lg border border-black/10 px-2 py-1"
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                >
+                  {TOUR_CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Input
+                label="Sort order (lower first)"
+                type="number"
+                value={form.sort_order}
+                onChange={(e) => setForm({ ...form, sort_order: e.target.value })}
+              />
+            </div>
+            <Input
+              label="Tags (comma-separated)"
+              value={form.tags}
+              onChange={(e) => setForm({ ...form, tags: e.target.value })}
+              placeholder="Easy, Sunset, Water"
+            />
+            <div className="mt-1">
+              <Checkbox
+                label="Public (show on site)"
+                checked={form.is_public}
+                onChange={(e) => setForm({ ...form, is_public: e.target.checked })}
+              />
+            </div>
+            <Textarea
+              label="Description"
+              rows={4}
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="Short description visitors will see…"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                className="px-4 py-2 rounded-lg bg-brand-heron text-white hover:opacity-90 disabled:opacity-60"
+                onClick={save}
+                disabled={saving}
+              >
+                {saving ? "Saving…" : "Save tour"}
+              </button>
+              <button className="px-4 py-2 rounded-lg border border-black/10 hover:bg-black/5" onClick={cancel}>
                 Cancel
               </button>
             </div>

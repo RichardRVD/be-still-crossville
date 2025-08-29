@@ -1,31 +1,69 @@
 // src/pages/Tours.jsx
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useForm } from "../hooks/useForm";
 import { submitVolunteerForm } from "../services/forms";
 import TourCalendar from "../components/TourCalendar";
+import { supabase } from "../services/supabase";
 
 export default function Tours() {
   const { status, error, handleSubmit } = useForm(submitVolunteerForm);
   const [selectedTour, setSelectedTour] = useState("Sunset Kayak – Meadow Park Lake");
   const [filter, setFilter] = useState("All");
+  const [dbTours, setDbTours] = useState(null); // null=loading, []=empty
   const formRef = useRef(null);
 
-  const TOURS = useMemo(
+  // Load tours from Supabase (public only), with graceful fallback
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("tours")
+          .select("title,description,category,tags,is_public,sort_order,created_at")
+          .eq("is_public", true)
+          .order("sort_order", { ascending: true })
+          .order("created_at", { ascending: false });
+        if (!alive) return;
+        if (error) throw new Error(error.message);
+        setDbTours(data || []);
+      } catch {
+        setDbTours([]); // still show defaults below
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Default catalog (fallback if table is empty/unavailable)
+  const DEFAULT_TOURS = useMemo(
     () => [
-      { title: "Sunset Kayak – Meadow Park Lake", desc: "Calm-water paddle, ~2 hours. Great for beginners.", category: "Kayak", tags: ["Easy","Sunset","Water"] },
-      { title: "Lake Tansi Morning Kayak",        desc: "Early paddle for wildlife spotting on mellow water.", category: "Kayak", tags: ["Easy","Wildlife","Water"] },
-      { title: "Black Mountain Overlook Hike",    desc: "Scenic hills, light elevation, photo-friendly spots.", category: "Hike", tags: ["Scenic","Easy","Photos"] },
-      { title: "Ozone Falls Hike",                desc: "Short trail to a dramatic waterfall; shaded and easy.", category: "Hike", tags: ["Waterfall","Easy","Shade"] },
-      { title: "Lily Bluff Trail – Obed River",   desc: "Moderate hike with fantastic river overlooks.", category: "Hike", tags: ["Moderate","River Views","Scenic"] },
-      { title: "Soldier’s Beach Hike",     desc: "Gentle shoreline walk with plant & wildlife notes.", category: "Hike", tags: ["Easy","Shoreline","Nature"] },
-      { title: "Fall Colors Hike (Seasonal)",     desc: "Peak color walk; leisurely pace for photos.", category: "Seasonal", tags: ["Scenic","Photos","Easy"] },
-      { title: "Winter Stillness Walk (Seasonal)",desc: "Quiet, mindful nature walk when trails are calm.", category: "Seasonal", tags: ["Mindful","Easy","Quiet"] },
+      { title: "Sunset Kayak – Meadow Park Lake", desc: "Calm-water paddle, ~2 hours. Great for beginners.", category: "Kayak", tags: ["Easy", "Sunset", "Water"] },
+      { title: "Black Mountain Overlook Hike",    desc: "Scenic hills, light elevation, photo-friendly spots.", category: "Hike", tags: ["Scenic", "Easy", "Photos"] },
+      { title: "Ozone Falls Hike",                desc: "Short trail to a dramatic waterfall; shaded and easy.", category: "Hike", tags: ["Waterfall", "Easy", "Shade"] },
+      { title: "Lily Bluff Trail – Obed River",   desc: "Moderate hike with fantastic river overlooks.", category: "Hike", tags: ["Moderate", "River Views", "Scenic"] },
+      { title: "Soldier’s Beach Hike",            desc: "Gentle shoreline walk with plant & wildlife notes.", category: "Hike", tags: ["Easy", "Shoreline", "Nature"] },
+      { title: "Fall Colors Hike (Seasonal)",     desc: "Peak color walk; leisurely pace for photos.", category: "Seasonal", tags: ["Scenic", "Photos", "Easy"] },
+      { title: "Winter Stillness Walk (Seasonal)",desc: "Quiet, mindful nature walk when trails are calm.", category: "Seasonal", tags: ["Mindful", "Easy", "Quiet"] },
     ],
     []
   );
 
-  const FILTERS = ["All", "Kayak", "Hike", "Backpacking", "Seasonal"];
+  // The list we will render (db -> map; else defaults)
+  const TOURS = useMemo(() => {
+    if (dbTours && dbTours.length > 0) {
+      return dbTours.map((t) => ({
+        title: t.title,
+        desc: t.description,
+        category: t.category,
+        tags: t.tags || [],
+      }));
+    }
+    return DEFAULT_TOURS;
+  }, [dbTours, DEFAULT_TOURS]);
+
+  const FILTERS = ["All", "Kayak", "Paddle Board", "Hike", "Walk", "Camping", "Backpacking", "Seasonal", "Other"];
 
   const visibleTours = useMemo(
     () => (filter === "All" ? TOURS : TOURS.filter((t) => t.category === filter)),
@@ -33,10 +71,8 @@ export default function Tours() {
   );
 
   const tourTitlesForSelect = useMemo(() => {
-    const base = TOURS.map(t => t.title);
-    if (selectedTour && !base.includes(selectedTour)) {
-      return [...base, selectedTour];
-    }
+    const base = TOURS.map((t) => t.title);
+    if (selectedTour && !base.includes(selectedTour)) return [...base, selectedTour];
     return base;
   }, [TOURS, selectedTour]);
 
@@ -76,7 +112,7 @@ export default function Tours() {
         <title>Tours — Be Still Crossville</title>
         <meta
           name="description"
-          content="Kayaking, hiking, camping, backpacking across the Upper Cumberland. Pick a date from the calendar for our scheduled events or fill out the form if you have a special request. If we can accommodate, we will let you know."
+          content="Kayaking, paddle boarding, hiking, camping, and backpacking across the Upper Cumberland. Pick a date from the calendar for scheduled events, or request a custom date."
         />
         <link rel="canonical" href="https://stillcrossville.com/tours" />
       </Helmet>
@@ -163,7 +199,8 @@ export default function Tours() {
         {/* Right: form */}
         <form ref={formRef} onSubmit={handleSubmit} className="card space-y-3">
           <p className="text-sm text-black/70">
-            Pick a date from the calendar for our scheduled events or fill out the form if you have a special request. If we can accommodate, we will let you know.
+            Pick a date from the calendar for our scheduled events, or send a request that works
+            for you. We’ll confirm availability and details by email or text.
           </p>
 
           {/* Honeypot */}
@@ -221,7 +258,7 @@ export default function Tours() {
           </label>
 
           <div className="text-xs text-black/60">
-            Payment options shared after sign-up (Via Stripe link online, or Venmo/cash in person).
+            Payment options shared after sign-up (Stripe link online, or Venmo/cash in person).
           </div>
 
           <button className="button-primary" type="submit" disabled={status === "submitting"}>
