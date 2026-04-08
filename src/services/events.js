@@ -26,7 +26,7 @@ function slugify(input) {
 export async function listPublicEvents({ from, to } = {}) {
   let q = supabase
     .from("events")
-    .select("id,title,tour,location,start_at,end_at,capacity,is_public,description")
+    .select("id,title,tour,location,start_at,end_at,capacity,is_public,description,price_per_person,checkout_enabled")
     .eq("is_public", true)
     .order("start_at", { ascending: true });
 

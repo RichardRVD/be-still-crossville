@@ -425,7 +425,9 @@ function EventsPanel() {
     start_at: "",
     end_at: "",
     capacity: 8,
+    price_per_person: "",
     is_public: true,
+    checkout_enabled: true,
     description: "",
   };
 
@@ -458,17 +460,19 @@ function EventsPanel() {
   }
   function startEdit(ev) {
     setEditing(ev.id);
-    setForm({
-      id: ev.id,
-      title: ev.title || "",
-      tour: ev.tour || "",
-      location: ev.location || "",
-      start_at: ev.start_at ? centralISOToLocalInput(ev.start_at) : "",
-      end_at: ev.end_at ? centralISOToLocalInput(ev.end_at) : "",
-      capacity: ev.capacity ?? 8,
-      is_public: !!ev.is_public,
-      description: ev.description || "",
-    });
+      setForm({
+        id: ev.id,
+        title: ev.title || "",
+        tour: ev.tour || "",
+        location: ev.location || "",
+        start_at: ev.start_at ? centralISOToLocalInput(ev.start_at) : "",
+        end_at: ev.end_at ? centralISOToLocalInput(ev.end_at) : "",
+        capacity: ev.capacity ?? 8,
+        price_per_person: ev.price_per_person ?? "",
+        is_public: !!ev.is_public,
+        checkout_enabled: ev.checkout_enabled !== false,
+        description: ev.description || "",
+      });
   }
   function cancelEdit() {
     setEditing(null);
@@ -500,6 +504,11 @@ function EventsPanel() {
         start_at: form.start_at ? chicagoLocalInputToUTCISO(form.start_at) : null,
         end_at: form.end_at ? chicagoLocalInputToUTCISO(form.end_at) : null,
         capacity: Number(form.capacity) || null,
+        price_per_person:
+          form.price_per_person === "" || form.price_per_person == null
+            ? null
+            : Number(form.price_per_person),
+        checkout_enabled: !!form.checkout_enabled,
       };
       const saved = await upsertEvent(payload);
       if (editing === "new") {
@@ -555,7 +564,9 @@ function EventsPanel() {
                       {ev.start_at ? formatCentral(ev.start_at) : "—"}{" "}
                       {ev.end_at ? "– " + formatCentral(ev.end_at) : ""}
                       {ev.location ? ` • ${ev.location}` : ""}
+                      {ev.price_per_person != null ? ` • $${Number(ev.price_per_person).toFixed(2)}/person` : ""}
                       {ev.is_public ? " • public" : " • private"}
+                      {ev.checkout_enabled === false ? " • checkout off" : " • checkout on"}
                     </div>
                   </div>
                   <div className="shrink-0 flex items-center gap-2">
@@ -634,11 +645,30 @@ function EventsPanel() {
                 value={form.capacity}
                 onChange={(e) => setForm({ ...form, capacity: e.target.value })}
               />
+              <Input
+                label="Event price per person (optional)"
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.price_per_person}
+                onChange={(e) => setForm({ ...form, price_per_person: e.target.value })}
+                placeholder="Uses tour price if blank"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="mt-6">
                 <Checkbox
                   label="Public (show on site)"
                   checked={form.is_public}
                   onChange={(e) => setForm({ ...form, is_public: e.target.checked })}
+                />
+              </div>
+              <div className="mt-6">
+                <Checkbox
+                  label="Enable checkout"
+                  checked={form.checkout_enabled}
+                  onChange={(e) => setForm({ ...form, checkout_enabled: e.target.checked })}
                 />
               </div>
             </div>
@@ -691,6 +721,9 @@ function ToursPanel() {
     tags: "",
     is_public: true,
     sort_order: 100,
+    price_per_person: 0,
+    max_party_size: 8,
+    checkout_enabled: true,
   };
 
   const [tours, setTours] = useState([]);
@@ -705,7 +738,7 @@ function ToursPanel() {
     setErr("");
     const { data, error } = await supabase
       .from("tours")
-      .select("id,title,description,category,tags,is_public,sort_order,created_at")
+      .select("id,title,description,category,tags,is_public,sort_order,price_per_person,max_party_size,checkout_enabled,created_at")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (error) setErr(error.message);
@@ -730,6 +763,9 @@ function ToursPanel() {
       tags: (row.tags || []).join(", "),
       is_public: !!row.is_public,
       sort_order: row.sort_order ?? 100,
+      price_per_person: row.price_per_person ?? 0,
+      max_party_size: row.max_party_size ?? 8,
+      checkout_enabled: row.checkout_enabled !== false,
     });
   }
   function cancel() {
@@ -748,6 +784,9 @@ function ToursPanel() {
         category: form.category,
         is_public: !!form.is_public,
         sort_order: Number(form.sort_order) || 100,
+        price_per_person: Number(form.price_per_person) || 0,
+        max_party_size: Number(form.max_party_size) || 8,
+        checkout_enabled: !!form.checkout_enabled,
         tags: form.tags.split(",").map((s) => s.trim()).filter(Boolean),
       };
       const { data, error } = await supabase.from("tours").upsert(payload).select().single();
@@ -801,6 +840,9 @@ function ToursPanel() {
                     <div className="text-xs text-black/60">
                       {t.category} • {(t.tags || []).join(" • ")} {t.is_public ? "• public" : "• private"}
                       {typeof t.sort_order === "number" ? ` • sort ${t.sort_order}` : ""}
+                      {typeof t.price_per_person === "number" ? ` • $${Number(t.price_per_person).toFixed(2)}/person` : ""}
+                      {typeof t.max_party_size === "number" ? ` • max ${t.max_party_size}` : ""}
+                      {t.checkout_enabled === false ? " • checkout off" : " • checkout on"}
                     </div>
                     {t.description && <p className="text-sm text-black/70 mt-1">{t.description}</p>}
                   </div>
@@ -857,6 +899,23 @@ function ToursPanel() {
                 onChange={(e) => setForm({ ...form, sort_order: e.target.value })}
               />
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input
+                label="Price per person (USD)"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.price_per_person}
+                onChange={(e) => setForm({ ...form, price_per_person: e.target.value })}
+              />
+              <Input
+                label="Max party size"
+                type="number"
+                min="1"
+                value={form.max_party_size}
+                onChange={(e) => setForm({ ...form, max_party_size: e.target.value })}
+              />
+            </div>
             <Input
               label="Tags (comma-separated)"
               value={form.tags}
@@ -868,6 +927,13 @@ function ToursPanel() {
                 label="Public (show on site)"
                 checked={form.is_public}
                 onChange={(e) => setForm({ ...form, is_public: e.target.checked })}
+              />
+            </div>
+            <div className="mt-1">
+              <Checkbox
+                label="Enable checkout"
+                checked={form.checkout_enabled}
+                onChange={(e) => setForm({ ...form, checkout_enabled: e.target.checked })}
               />
             </div>
             <Textarea
