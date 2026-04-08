@@ -315,7 +315,7 @@ function BookingsPanel() {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
   }
 
-  async function saveRow(id) {
+  async function saveRow(id, patchOverride) {
     const row = rows.find((item) => item.id === id);
     if (!row) return;
     setSavingId(id);
@@ -325,12 +325,17 @@ function BookingsPanel() {
       .from("bookings")
       .update({
         payment_status: row.payment_status || "pending",
-        notes: row.notes || null,
+        ...(patchOverride || {}),
       })
       .eq("id", id);
 
     if (error) setError(error.message);
     setSavingId(null);
+  }
+
+  async function changeBookingStatus(id, value) {
+    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, payment_status: value } : row)));
+    await saveRow(id, { payment_status: value });
   }
 
   const filtered = useMemo(() => {
@@ -399,6 +404,10 @@ function BookingsPanel() {
         />
       </div>
 
+      <p className="mb-4 text-sm text-black/60">
+        Bookings are paid or reserved tour records. Contact form and freeform interest submissions stay in the Signups tab.
+      </p>
+
       <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="rounded-xl border border-black/10 bg-white p-4">
           <div className="text-xs text-black/60">Bookings shown</div>
@@ -462,7 +471,7 @@ function BookingsPanel() {
                   <select
                     className="rounded-lg border border-black/10 px-2 py-1 text-sm"
                     value={row.payment_status || "pending"}
-                    onChange={(e) => onChangeField(row.id, "payment_status", e.target.value)}
+                    onChange={(e) => changeBookingStatus(row.id, e.target.value)}
                   >
                     {BOOKING_PAYMENT_STATUS_OPTIONS.map((status) => (
                       <option key={status} value={status}>
@@ -470,13 +479,9 @@ function BookingsPanel() {
                       </option>
                     ))}
                   </select>
-                  <button
-                    className="px-3 py-1.5 rounded-lg border border-black/10 hover:bg-black/5 disabled:opacity-60"
-                    onClick={() => saveRow(row.id)}
-                    disabled={savingId === row.id}
-                  >
-                    {savingId === row.id ? "Saving…" : "Save"}
-                  </button>
+                  {savingId === row.id && (
+                    <span className="px-3 py-1.5 text-sm text-black/50">Saving…</span>
+                  )}
                   {row.customer_email && (
                     <a
                       className="px-3 py-1.5 rounded-lg border border-black/10 hover:bg-black/5"
@@ -585,6 +590,11 @@ function SignupsPanel() {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status: "contacted" } : r)));
   }
 
+  async function changeSignupStatus(id, value) {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status: value } : r)));
+    await saveRow(id, { status: value });
+  }
+
   const filtered = useMemo(() => {
     let out = rows;
     if (filter !== "all") out = out.filter((r) => (r.status || "new") === filter);
@@ -637,6 +647,10 @@ function SignupsPanel() {
           className="flex-1 min-w-[220px] rounded-xl border border-black/10 px-3 py-2"
         />
       </div>
+
+      <p className="mb-4 text-sm text-black/60">
+        Signups are manual inquiries and freeform requests. Stripe checkout reservations appear in the Bookings tab.
+      </p>
 
       {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
       {loading ? (
@@ -704,7 +718,7 @@ function SignupsPanel() {
                     <select
                       className="rounded-lg border border-black/10 px-2 py-1"
                       value={r.status || "new"}
-                      onChange={(e) => onChangeField(r.id, "status", e.target.value)}
+                      onChange={(e) => changeSignupStatus(r.id, e.target.value)}
                     >
                       {STATUS_OPTIONS.map((s) => (
                         <option key={s} value={s}>
@@ -732,7 +746,7 @@ function SignupsPanel() {
                         disabled={savingId === r.id}
                         title="Save changes"
                       >
-                        {savingId === r.id ? "Saving…" : "Save"}
+                        {savingId === r.id ? "Saving…" : "Save note"}
                       </button>
 
                       <button
