@@ -66,6 +66,18 @@ function fmtTimeRange(ev) {
   }
 }
 
+function fmtShortDate(isoLike) {
+  try {
+    return parseDateSafe(isoLike).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  } catch {
+    return "";
+  }
+}
+
 export default function TourCalendar({ onUseEvent }) {
   const [month, setMonth] = useState(() => new Date());
   const [selected, setSelected] = useState(() => new Date());
@@ -214,7 +226,9 @@ export default function TourCalendar({ onUseEvent }) {
             <div key={ev.id} className="rounded-xl border border-black/10 p-3">
               <div className="font-medium">{ev.title || ev.tour || "Event"}</div>
               <div className="text-xs text-black/60">
-                {fmtTimeRange(ev)}
+                {fmtShortDate(ev.start_at)}
+                {fmtTimeRange(ev) ? ` • ${fmtTimeRange(ev)}` : ""}
+                {ev.price_per_person != null ? ` • $${Number(ev.price_per_person).toFixed(2)}/person` : ""}
                 {ev.location ? ` — ${ev.location}` : ""}
               </div>
               {ev.description && (
