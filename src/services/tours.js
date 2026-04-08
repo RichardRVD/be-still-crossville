@@ -12,6 +12,17 @@ export async function listPublicTours() {
   return data ?? [];
 }
 
+export async function listAllTours() {
+  const { data, error } = await supabase
+    .from("tours")
+    .select("id,title,category,is_public,price_per_person,max_party_size,checkout_enabled")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
 export async function upsertTour(tour) {
   const { data, error } = await supabase
     .from("tours")

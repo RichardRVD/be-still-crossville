@@ -32,7 +32,7 @@ export default function About() {
       { q: "Do I need prior experience?", a: "Nope. Our hikes and calm-water paddles are beginner friendly. We set the pace based on the group." },
       { q: "What should I bring?", a: "Water, sunscreen, comfy shoes. For kayaking: quick dry clothing and a towel. We’ll confirm specifics by email." },
       { q: "What happens if the weather looks bad?", a: "Safety first, if conditions aren’t right, we reschedule. We’ll email you updates the day before or morning of." },
-      { q: "How does Pay What You Want work?", a: "During our soft launch, you choose the amount, via Stripe, cash, or Venmo after you sign up." },
+      { q: "How does pricing work?", a: "Most lessons and guided tours have clear per-person pricing online. Some community hikes may stay free, with an optional tip or donation if you want to support them." },
       { q: "Where do we meet?", a: "We’ll email exact meet-up info (like Meadow Park Lake or the trailhead) after you sign up for a tour." },
     ],
     []
@@ -182,7 +182,7 @@ export default function About() {
         {/* CTA */}
         <div className="text-center mt-6">
           <Link to="/tours" className="button-primary">Book a Tour</Link>
-          <p className="text-xs text-black/60 mt-2">Soft launch: Pay What You Want for volunteers.</p>
+          <p className="text-xs text-black/60 mt-2">Most tours now have set pricing. Free community hikes may include an optional tip link.</p>
         </div>
       </section>
     </>
