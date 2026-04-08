@@ -2,10 +2,12 @@
 import React, { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { submitContactForm } from "../services/forms";
+import { formatPhoneInput } from "../utils/formatters";
 
 export default function Contact() {
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
+  const [phone, setPhone] = useState("");
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -26,6 +28,7 @@ export default function Contact() {
       await submitContactForm(data);
       setStatus("success");
       form.reset();
+      setPhone("");
     } catch (err) {
       setStatus("error");
       setError(err?.message || "Something went wrong.");
@@ -124,6 +127,9 @@ export default function Contact() {
             <input
               name="phone"
               inputMode="tel"
+              value={phone}
+              onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+              placeholder="(931) 555-1234"
               className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2"
             />
           </label>

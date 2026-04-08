@@ -2,11 +2,11 @@
 import React from "react";
 
 export default function PayLinkButton({
-  children = "Pay What You Want",
+  children = "Leave a Tip",
   className = "",
-  ariaLabel = "Open secure payment link",
+  ariaLabel = "Open secure tip or donation link",
 }) {
-  const href = import.meta.env.VITE_STRIPE_PWYW_URL;
+  const href = import.meta.env.VITE_STRIPE_TIP_URL || import.meta.env.VITE_STRIPE_PWYW_URL;
   if (!href) return null;
 
   return (

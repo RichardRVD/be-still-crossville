@@ -1,6 +1,6 @@
 // src/components/TourCalendar.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { listPublicEvents } from "../services/events";
+import { getEventAvailability, listPublicEvents } from "../services/events";
 import {
   startOfMonth,
   endOfMonth,
@@ -82,6 +82,7 @@ export default function TourCalendar({ onUseEvent }) {
   const [month, setMonth] = useState(() => new Date());
   const [selected, setSelected] = useState(() => new Date());
   const [events, setEvents] = useState([]);
+  const [bookingCounts, setBookingCounts] = useState({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -93,10 +94,29 @@ export default function TourCalendar({ onUseEvent }) {
       try {
         setLoading(true);
         const rows = await listPublicEvents({ from, to });
-        if (!cancelled) setEvents(rows || []);
+        if (cancelled) return;
+        setEvents(rows || []);
+
+        const ids = (rows || []).map((row) => row.id).filter(Boolean);
+        if (ids.length === 0) {
+          setBookingCounts({});
+          return;
+        }
+
+        const availability = await getEventAvailability(ids);
+        if (cancelled) return;
+
+        const counts = (availability || []).reduce((acc, row) => {
+          acc[row.event_id] = Number(row.reserved_spots || 0);
+          return acc;
+        }, {});
+        setBookingCounts(counts);
       } catch (e) {
         console.warn("Calendar events load failed:", e);
-        if (!cancelled) setEvents([]);
+        if (!cancelled) {
+          setEvents([]);
+          setBookingCounts({});
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -140,6 +160,18 @@ export default function TourCalendar({ onUseEvent }) {
     return eventsByCTDay.has(key);
   }
 
+  function isSoldOut(ev) {
+    const capacity = Number(ev.capacity || 0);
+    if (!capacity) return false;
+    return Number(bookingCounts[ev.id] || 0) >= capacity;
+  }
+
+  function dayIsSoldOut(d) {
+    const key = ymdInCT(d.toISOString());
+    const list = eventsByCTDay.get(key) || [];
+    return list.length > 0 && list.every((ev) => isSoldOut(ev));
+  }
+
   return (
     <div className="flex flex-col gap-3 md:flex-row md:gap-6">
       {/* Calendar */}
@@ -181,12 +213,15 @@ export default function TourCalendar({ onUseEvent }) {
             const inMonth = d.getMonth() === month.getMonth();
             const isSel = sameLocalYMD(d, selected);
             const has = cellHasEvent(d);
+            const soldOut = dayIsSoldOut(d);
 
             const base =
               "aspect-square rounded-xl text-sm transition relative overflow-hidden";
             const bg =
               isSel
                 ? "bg-brand-heron text-white"
+                : soldOut
+                ? "bg-rose-100 ring-1 ring-rose-200 text-rose-700"
                 : has
                 ? "bg-blue-200/50 ring-1 ring-blue-300/60 hover:bg-blue-200/70"
                 : "hover:bg-black/5";
@@ -208,7 +243,7 @@ export default function TourCalendar({ onUseEvent }) {
           })}
         </div>
 
-        <div className="mt-2 text-[11px] text-black/50">Shaded days have events</div>
+        <div className="mt-2 text-[11px] text-black/50">Blue days have events. Rose days are fully booked.</div>
       </div>
 
       {/* Sidebar list for selected day */}
@@ -231,15 +266,24 @@ export default function TourCalendar({ onUseEvent }) {
                 {ev.price_per_person != null ? ` • $${Number(ev.price_per_person).toFixed(2)}/person` : ""}
                 {ev.location ? ` — ${ev.location}` : ""}
               </div>
+              {ev.capacity ? (
+                <div className="mt-1 text-xs text-black/60">
+                  {Math.max(Number(ev.capacity) - Number(bookingCounts[ev.id] || 0), 0)} of {ev.capacity} spots left
+                </div>
+              ) : null}
               {ev.description && (
                 <div className="text-sm mt-1 text-black/70">{ev.description}</div>
               )}
               <button
                 type="button"
-                className="mt-2 rounded-lg border border-black/10 px-3 py-1.5 text-sm hover:bg-black/5"
-                onClick={() => onUseEvent?.(ev)}
+                className={
+                  "mt-2 rounded-lg border border-black/10 px-3 py-1.5 text-sm " +
+                  (isSoldOut(ev) ? "cursor-not-allowed bg-black/5 text-black/40" : "hover:bg-black/5")
+                }
+                onClick={() => !isSoldOut(ev) && onUseEvent?.(ev)}
+                disabled={isSoldOut(ev)}
               >
-                Select
+                {isSoldOut(ev) ? "Sold Out" : "Select"}
               </button>
             </div>
           ))}

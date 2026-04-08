@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
+import PayLinkButton from "../components/PayLinkButton";
 import TourCalendar from "../components/TourCalendar";
 import { createCheckoutSession } from "../services/bookings";
+import { submitVolunteerForm } from "../services/forms";
 import { listPublicTours } from "../services/tours";
+import { formatDateInput, formatPhoneInput } from "../utils/formatters";
 
 const DEFAULT_TOURS = [
   {
@@ -19,7 +22,7 @@ const DEFAULT_TOURS = [
     desc: "Scenic hills, light elevation, and photo-friendly overlooks.",
     category: "Hike",
     tags: ["Scenic", "Easy", "Photos"],
-    pricePerPerson: 24,
+    pricePerPerson: 30,
     maxPartySize: 10,
     checkoutEnabled: true,
   },
@@ -28,7 +31,7 @@ const DEFAULT_TOURS = [
     desc: "Short trail to a dramatic waterfall with shaded sections.",
     category: "Hike",
     tags: ["Waterfall", "Easy", "Shade"],
-    pricePerPerson: 24,
+    pricePerPerson: 30,
     maxPartySize: 10,
     checkoutEnabled: true,
   },
@@ -37,7 +40,7 @@ const DEFAULT_TOURS = [
     desc: "Moderate hike with broad river overlooks and a steady pace.",
     category: "Hike",
     tags: ["Moderate", "River Views", "Scenic"],
-    pricePerPerson: 28,
+    pricePerPerson: 30,
     maxPartySize: 8,
     checkoutEnabled: true,
   },
@@ -46,7 +49,7 @@ const DEFAULT_TOURS = [
     desc: "Gentle shoreline walk with a slower, conversational pace.",
     category: "Hike",
     tags: ["Easy", "Shoreline", "Nature"],
-    pricePerPerson: 22,
+    pricePerPerson: 30,
     maxPartySize: 10,
     checkoutEnabled: true,
   },
@@ -55,7 +58,7 @@ const DEFAULT_TOURS = [
     desc: "Peak-color walk built for a relaxed pace and frequent photo stops.",
     category: "Seasonal",
     tags: ["Scenic", "Photos", "Easy"],
-    pricePerPerson: 26,
+    pricePerPerson: 30,
     maxPartySize: 10,
     checkoutEnabled: true,
   },
@@ -64,7 +67,7 @@ const DEFAULT_TOURS = [
     desc: "Quiet winter trail experience with a reflective, mindful pace.",
     category: "Seasonal",
     tags: ["Mindful", "Easy", "Quiet"],
-    pricePerPerson: 20,
+    pricePerPerson: 30,
     maxPartySize: 10,
     checkoutEnabled: true,
   },
@@ -72,25 +75,57 @@ const DEFAULT_TOURS = [
 
 const FILTERS = ["All", "Kayak", "Paddle Board", "Hike", "Walk", "Camping", "Backpacking", "Seasonal", "Other"];
 
+function normalizeTags(tags) {
+  const rawValues = Array.isArray(tags) ? tags : [tags];
+  return rawValues
+    .flatMap((value) =>
+      (value || "")
+        .toString()
+        .split(",")
+        .map((part) => part.trim())
+    )
+    .map((value) =>
+      value
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/\s+/g, " ")
+        .trim()
+    )
+    .filter(Boolean);
+}
+
+function normalizeCategoryLabel(value, title = "", tags = []) {
+  const direct = (value || "").toString().trim().toLowerCase();
+  if (direct === "kayak") return "Kayak";
+  if (direct === "paddle board" || direct === "paddleboard") return "Paddle Board";
+  if (direct === "hike") return "Hike";
+  if (direct === "walk") return "Walk";
+  if (direct === "camping") return "Camping";
+  if (direct === "backpacking") return "Backpacking";
+  if (direct === "seasonal") return "Seasonal";
+  if (direct === "other") return "Other";
+
+  const raw = [title, ...(tags || [])].filter(Boolean).join(" ").toLowerCase();
+
+  if (raw.includes("paddle board") || raw.includes("paddleboard") || raw.includes("sup")) {
+    return "Paddle Board";
+  }
+  if (raw.includes("kayak")) return "Kayak";
+  if (raw.includes("backpack")) return "Backpacking";
+  if (raw.includes("camp")) return "Camping";
+  if (raw.includes("walk")) return "Walk";
+  if (raw.includes("season")) return "Seasonal";
+  if (raw.includes("hike") || raw.includes("trail") || raw.includes("waterfall")) {
+    return "Hike";
+  }
+
+  return "Other";
+}
+
 function formatCurrency(amount) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
   }).format(amount || 0);
-}
-
-function formatPhoneInput(value) {
-  const digits = value.replace(/\D/g, "").slice(0, 10);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-}
-
-function formatDateInput(value) {
-  const digits = value.replace(/\D/g, "").slice(0, 8);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 }
 
 function formatEventDateOnly(startISO) {
@@ -124,8 +159,35 @@ function formatDateRange(startISO, endISO) {
   }
 }
 
+function deriveExperienceLabel(tour, event) {
+  if (tour?.title) return tour.title;
+  if (event?.tour) return event.tour;
+  if (event?.title) return event.title;
+  return "Selected outing";
+}
+
+function deriveSelectedContext(tour, event) {
+  const category = tour?.category || normalizeCategoryLabel(event?.tour, event?.title);
+  const isScheduled = !!event?.id;
+
+  return {
+    categoryLabel:
+      category === "Kayak"
+        ? "Kayak tour"
+        : category === "Paddle Board"
+        ? "Paddle board lesson"
+        : category === "Hike"
+        ? "Guided hike"
+        : category === "Walk"
+        ? "Nature walk"
+        : "Outdoor outing",
+    selectionLabel: isScheduled ? "Scheduled date selected" : "Custom date request",
+  };
+}
+
 export default function Tours() {
   const formRef = useRef(null);
+  const [selectedTourId, setSelectedTourId] = useState(DEFAULT_TOURS[0].id || null);
   const [selectedTour, setSelectedTour] = useState(DEFAULT_TOURS[0].title);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [filter, setFilter] = useState("All");
@@ -172,8 +234,8 @@ export default function Tours() {
         id: tour.id,
         title: tour.title,
         desc: tour.description,
-        category: tour.category || "Other",
-        tags: tour.tags || [],
+        category: normalizeCategoryLabel(tour.category, tour.title, tour.tags),
+        tags: normalizeTags(tour.tags),
         pricePerPerson: Number(tour.price_per_person || 0),
         maxPartySize: Number(tour.max_party_size || 10),
         checkoutEnabled: tour.checkout_enabled !== false,
@@ -189,8 +251,21 @@ export default function Tours() {
   );
 
   const selectedTourData = useMemo(
-    () => tours.find((tour) => tour.title === selectedTour) || DEFAULT_TOURS[0],
-    [selectedTour, tours]
+    () =>
+      tours.find((tour) => (selectedTourId ? tour.id === selectedTourId : false)) ||
+      tours.find((tour) => tour.title === selectedTour) ||
+      DEFAULT_TOURS[0],
+    [selectedTour, selectedTourId, tours]
+  );
+
+  const experienceLabel = useMemo(
+    () => deriveExperienceLabel(selectedTourData, selectedEvent),
+    [selectedEvent, selectedTourData]
+  );
+
+  const selectedContext = useMemo(
+    () => deriveSelectedContext(selectedTourData, selectedEvent),
+    [selectedEvent, selectedTourData]
   );
 
   const effectivePricePerPerson = useMemo(() => {
@@ -210,6 +285,8 @@ export default function Tours() {
     return size * effectivePricePerPerson;
   }, [effectivePricePerPerson, form.party_size]);
 
+  const bookingMode = effectivePricePerPerson > 0 ? "paid" : "free";
+
   useEffect(() => {
     setForm((current) => {
       const nextSize = Math.min(Math.max(Number(current.party_size || 1), 1), maxAllowedPartySize);
@@ -219,6 +296,9 @@ export default function Tours() {
   }, [maxAllowedPartySize]);
 
   function updateField(field, value) {
+    setBookingState((current) =>
+      current.status === "idle" ? current : { status: "idle", error: "" }
+    );
     setForm((current) => ({ ...current, [field]: value }));
   }
 
@@ -231,17 +311,33 @@ export default function Tours() {
   }
 
   function selectTour(title) {
+    const nextTour = tours.find((tour) => tour.title === title);
+    setSelectedTourId(nextTour?.id || null);
     setSelectedTour(title);
+    if (nextTour?.category) {
+      setFilter(nextTour.category);
+    }
     setSelectedEvent(null);
+    setBookingState({ status: "idle", error: "" });
     requestAnimationFrame(() =>
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
     );
   }
 
   function handleUseEvent(event) {
-    const title = event.tour || event.title || selectedTour;
+    const nextTour =
+      tours.find((tour) => event.tour_id && tour.id === event.tour_id) ||
+      tours.find((tour) => tour.title === event.tour) ||
+      tours.find((tour) => tour.title === event.title) ||
+      null;
+    const title = nextTour?.title || event.tour || event.title || selectedTour;
+    setSelectedTourId(nextTour?.id || null);
     setSelectedTour(title);
+    if (nextTour?.category) {
+      setFilter(nextTour.category);
+    }
     setSelectedEvent(event);
+    setBookingState({ status: "idle", error: "" });
     updateField("dates", formatEventDateOnly(event.start_at));
 
     requestAnimationFrame(() =>
@@ -254,6 +350,26 @@ export default function Tours() {
     setBookingState({ status: "submitting", error: "" });
 
     try {
+      if (effectivePricePerPerson <= 0) {
+        const freeRequest = new FormData();
+        freeRequest.set("name", form.name.trim());
+        freeRequest.set("email", form.email.trim());
+        freeRequest.set("phone", form.phone.trim());
+        freeRequest.set("preferred_contact", form.preferred_contact);
+        freeRequest.set("tour", selectedTourData.title);
+        freeRequest.set("dates", form.dates.trim());
+        freeRequest.set(
+          "notes",
+          [`Free community outing`, `Party size: ${Number(form.party_size || 0)}`, form.notes.trim()]
+            .filter(Boolean)
+            .join("\n")
+        );
+
+        await submitVolunteerForm(freeRequest);
+        setBookingState({ status: "success", error: "" });
+        return;
+      }
+
       const payload = {
         customer: {
           name: form.name.trim(),
@@ -315,6 +431,12 @@ export default function Tours() {
         </div>
       )}
 
+      {bookingState.status === "success" && (
+        <div className="mb-6 rounded-2xl border border-green-200 bg-green-50 p-4 text-green-900">
+          Your free outing request is in. We will confirm the details shortly.
+        </div>
+      )}
+
       <div className="grid md:grid-cols-2 gap-8">
         <div className="space-y-6">
           <div>
@@ -359,7 +481,7 @@ export default function Tours() {
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="font-semibold text-brand.heron">{tour.title}</h3>
                         <span className="rounded-full bg-brand.water/20 px-2 py-1 text-xs text-brand.heron">
-                          {formatCurrency(tour.pricePerPerson)} / person
+                          {tour.pricePerPerson > 0 ? `${formatCurrency(tour.pricePerPerson)} / person` : "Free"}
                         </span>
                       </div>
                       <p className="text-sm text-black/70 mt-1">{tour.desc}</p>
@@ -367,7 +489,7 @@ export default function Tours() {
                         {tour.tags.map((tag) => (
                           <span
                             key={tag}
-                            className="text-xs px-2 py-1 rounded-full bg-brand.water/20 text-brand.heron"
+                            className="inline-flex items-center rounded-full border border-brand.heron/15 bg-white px-2.5 py-1 text-[11px] font-medium tracking-[0.08em] text-brand.heron shadow-sm"
                           >
                             {tag}
                           </span>
@@ -395,19 +517,42 @@ export default function Tours() {
 
         <form ref={formRef} onSubmit={handleCheckout} className="card space-y-4">
           <div>
-            <h2 className="font-semibold text-brand.heron">Checkout</h2>
+            <h2 className="font-semibold text-brand.heron">
+              {bookingMode === "paid" ? "Book This Outing" : "Reserve This Free Outing"}
+            </h2>
             <p className="mt-1 text-sm text-black/70">
-              Choose a tour, set your group size, and continue to secure checkout.
+              {bookingMode === "paid"
+                ? "Choose a tour, set your group size, and continue to secure checkout."
+                : "Choose a free community outing, reserve your spot, and we will follow up with details."}
             </p>
           </div>
 
           <div className="rounded-2xl bg-brand.water/10 p-4">
-            <div className="text-sm text-black/60">Selected tour</div>
-            <div className="mt-1 text-lg font-semibold text-brand.heron">{selectedTourData.title}</div>
+            <div className="text-sm text-black/60">Selected outing</div>
+            <div className="mt-1 text-lg font-semibold text-brand.heron">{experienceLabel}</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="rounded-full bg-white/80 px-2 py-1 text-xs text-brand.heron">
+                {selectedContext.categoryLabel}
+              </span>
+              <span className="rounded-full bg-white/80 px-2 py-1 text-xs text-brand.heron">
+                {selectedContext.selectionLabel}
+              </span>
+              <span className="rounded-full bg-white/80 px-2 py-1 text-xs text-brand.heron">
+                {bookingMode === "paid" ? "Paid booking" : "Free reservation"}
+              </span>
+            </div>
             <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-black/70">
-              <span>{formatCurrency(selectedTourData.pricePerPerson)} per person</span>
+              <span>
+                {effectivePricePerPerson > 0
+                  ? `${formatCurrency(effectivePricePerPerson)} per person`
+                  : "Free community outing"}
+              </span>
               {selectedEvent?.price_per_person != null && (
-                <span>Event price override: {formatCurrency(Number(selectedEvent.price_per_person || 0))}</span>
+                <span>
+                  Event price override: {Number(selectedEvent.price_per_person || 0) > 0
+                    ? formatCurrency(Number(selectedEvent.price_per_person || 0))
+                    : "Free"}
+                </span>
               )}
               <span>Max party size {selectedTourData.maxPartySize}</span>
               {selectedEvent && (
@@ -419,6 +564,11 @@ export default function Tours() {
                 Event capacity: {selectedEvent.capacity} guests. Final availability is confirmed at checkout.
               </div>
             ) : null}
+            {!selectedEvent && (
+              <div className="mt-2 text-sm text-black/70">
+                No scheduled date selected yet. You can still request a custom date and we will confirm availability.
+              </div>
+            )}
           </div>
 
           <label className="block">
@@ -526,18 +676,27 @@ export default function Tours() {
 
           <div className="rounded-2xl border border-black/10 p-4">
             <div className="flex items-center justify-between text-sm text-black/60">
-              <span>Price per person</span>
-              <span>{formatCurrency(effectivePricePerPerson)}</span>
+              <span>{effectivePricePerPerson > 0 ? "Price per person" : "Community rate"}</span>
+              <span>{effectivePricePerPerson > 0 ? formatCurrency(effectivePricePerPerson) : "Free"}</span>
             </div>
             <div className="mt-2 flex items-center justify-between text-sm text-black/60">
               <span>Party size</span>
               <span>{Number(form.party_size || 0)}</span>
             </div>
             <div className="mt-3 flex items-center justify-between text-lg font-semibold text-brand.heron">
-              <span>Total due today</span>
-              <span>{formatCurrency(totalPrice)}</span>
+              <span>{effectivePricePerPerson > 0 ? "Total due today" : "Due today"}</span>
+              <span>{effectivePricePerPerson > 0 ? formatCurrency(totalPrice) : "Free"}</span>
             </div>
           </div>
+
+          {effectivePricePerPerson <= 0 && (
+            <div className="rounded-2xl bg-brand.water/10 p-4 text-sm text-black/70">
+              This outing is free to join. If you want to support future community hikes, you can leave an optional tip.
+              <div className="mt-3">
+                <PayLinkButton>Leave an Optional Tip</PayLinkButton>
+              </div>
+            </div>
+          )}
 
           <button
             className="button-primary w-full disabled:opacity-60"
@@ -545,15 +704,21 @@ export default function Tours() {
             disabled={
               bookingState.status === "submitting" ||
               !selectedTourData.checkoutEnabled ||
-              totalPrice <= 0
+              Number(form.party_size || 0) <= 0
             }
           >
-            {bookingState.status === "submitting" ? "Redirecting to checkout..." : `Pay ${formatCurrency(totalPrice)}`}
+            {bookingState.status === "submitting"
+              ? effectivePricePerPerson > 0
+                ? "Redirecting to checkout..."
+                : "Submitting..."
+              : effectivePricePerPerson > 0
+                ? `Pay ${formatCurrency(totalPrice)}`
+                : "Reserve Free Spot"}
           </button>
 
           {!selectedTourData.checkoutEnabled && (
             <p className="text-sm text-amber-700">
-              Online checkout is not enabled for this tour yet.
+              This tour is not open for online booking right now.
             </p>
           )}
 

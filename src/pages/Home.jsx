@@ -27,7 +27,7 @@ export default function Home() {
         </title>
         <meta
           name="description"
-          content="Your local gateway to quiet, affordable outdoor time in Crossville, TN — calm-water kayaking, paddleboarding, beginner-friendly hikes, nature walks, camping/overnights, and community cleanups. Peaceful, small-group outings; pay-what-you-want during our soft launch."
+          content="Your local gateway to quiet, affordable outdoor time in Crossville, TN — calm-water kayaking, paddleboarding, beginner-friendly hikes, nature walks, camping/overnights, and community cleanups. Peaceful, small-group outings with simple online booking."
         />
         <link rel="canonical" href="https://stillcrossville.com/" />
 
@@ -96,8 +96,8 @@ export default function Home() {
             Your local gateway to <strong>quiet, affordable</strong> outdoor time
             around Crossville and the Upper Cumberland. We keep groups small and
             the pace easy—so you can slow down, breathe, and enjoy the water,
-            woods, and views. During our soft launch, most outings are{" "}
-            <strong>pay-what-you-want</strong>.
+            woods, and views. Most guided outings are now priced clearly online,
+            while select community hikes stay free with an optional tip or donation.
           </p>
         </div>
       </section>
@@ -175,8 +175,8 @@ export default function Home() {
                 ),
               },
               {
-                title: "Pay What You Want",
-                desc: "Soft-launch pricing so everyone can join in.",
+                title: "Clear Pricing",
+                desc: "Simple per-person rates for lessons and tours, with occasional free community outings.",
                 icon: <FaLeaf size={24} className="mx-auto text-brand.heron" />,
               },
             ].map((item) => (
@@ -192,9 +192,9 @@ export default function Home() {
           <div className="text-center mt-8">
             <div className="text-center mt-8 space-x-2">
               <Link to="/tours" className="button-primary inline-block">View Tours</Link>
-              <PayLinkButton>Pay What You Want</PayLinkButton>
+              <PayLinkButton>Support Free Hikes</PayLinkButton>
               <p className="text-xs text-black/60 mt-2">
-                Soft launch: Pay What You Want for volunteers.
+                Some community hikes stay free. Tips and donations help support those outings.
               </p>
             </div>
           </div>
